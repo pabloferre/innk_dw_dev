@@ -1,0 +1,4 @@
+innk_dw_env/
+innk_env/
+.env
+documentation/credentials.json

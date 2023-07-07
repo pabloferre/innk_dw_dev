@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS innk_dw_dev.public.dim_idea (
+    id INT IDENTITY(1, 1) PRIMARY KEY NOT NULL UNIQUE,
+    idea_id_db INT,
+    company_id INT,
+    CONSTRAINT fk_id_company FOREIGN KEY (company_id) REFERENCES dim_company(id),
+    tag_name VARCHAR(24000),
+    tag_description VARCHAR(24000),
+    tag_type INT,
+    is_private BOOLEAN DEFAULT FALSE,
+    category VARCHAR(24000),
+    stage VARCHAR(24000),
+    like_ideas_count INT,
+    average_general FLOAT,
+    idea_name VARCHAR(24000),
+    idea_description VARCHAR(24000),
+    problem VARCHAR(24000),
+    solution VARCHAR(24000),
+    created_at TIMESTAMP WITHOUT TIME ZONE   ENCODE az64,
+	updated_at TIMESTAMP WITHOUT TIME ZONE   ENCODE az64,
+    valid_from TIMESTAMP WITHOUT TIME ZONE   ENCODE az64,
+    valid_to TIMESTAMP WITHOUT TIME ZONE   ENCODE az64,
+    is_current BOOLEAN DEFAULT TRUE
+)
