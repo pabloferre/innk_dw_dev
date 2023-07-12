@@ -12,7 +12,7 @@ openai.organization = OPENAI_ORG_ID
 forms_by_company = pd.read_json(r'H:\Mi unidad\Innk\fields_by_company.json')
 titles = forms_by_company['field_title'].apply().to_list()
 descriptions = forms_by_company['field_description'].replace('','No description').to_list()
-
+companies_id = forms_by_company['company_id'].to_list()
 
 
 def classify_field(title, description):
@@ -38,17 +38,24 @@ def classify_field(title, description):
         max_tokens=100,
         temperature=0.3,
     )
-    print(response.choices[0].message)
     return response.choices[0].message['content']
 
-def classify_fields(titles, descriptions):
+
+def classify_fields(titles, descriptions, companies_id):
     classification_dict = {}
-    for title, description in zip(titles, descriptions):
-        classification = classify_field(title, description)
-        classification_dict[title] = classification
+    for title, description, comp_id in zip(titles, descriptions, companies_id):
+        try:
+            classification = classify_field(title, description)
+            classification_dict[title] = classification
+            classification_dict['company_id'] = comp_id
+        except Exception as e:
+            print(e)
+        finally:
+            print('Error occurs in index: ' + str(titles.index(title)))
+            return classification_dict
 
     return classification_dict
 
 # Usage:
 
-classification_dict = classify_fields(titles, descriptions)
+classification_dict = classify_fields(titles, descriptions, companies_id)
