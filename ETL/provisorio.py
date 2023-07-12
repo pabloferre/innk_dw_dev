@@ -55,7 +55,8 @@ except Exception as e:
 ideas = pd.read_json(r'H:\Mi unidad\Innk\forms_complete.json')
 ideas = ideas.loc[ideas.loc[:,'company_id'].isin(companies['company_db_id'])]
 
-fields_cby_company = ideas.groupby('company_id')['field_title'].unique()
+fields_by_company = ideas[['company_id', 'field_title', 'field_description']].drop_duplicates(ignore_index=True)
+
 unique_fields = ideas['field_title'].unique()
 
 

@@ -1,88 +1,54 @@
 import openai
 from dotenv import load_dotenv
 import os
+import pandas as pd
 
 load_dotenv()
-API_KEY_OAI = os.environ.get('API_KEY_OAI') 
-API = API_KEY_OAI
-openai.api_key = API
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY') 
+OPENAI_ORG_ID = os.environ.get('OPENAI_ORG_ID')
+openai.api_key = OPENAI_API_KEY
+openai.organization = OPENAI_ORG_ID
+
+forms_by_company = pd.read_json(r'H:\Mi unidad\Innk\fields_by_company.json')
+titles = forms_by_company['field_title'].apply().to_list()
+descriptions = forms_by_company['field_description'].replace('','No description').to_list()
 
 
-import openai
 
-def classify_field_names(field_names):
-    prompt = "classify these field names accordingly to their similarities:"
-    for field_name in field_names:
-        prompt += '\n"' + field_name + '",'
-    prompt = prompt[:-1]  # Remove the last comma
-    prompt += '\n\n---\n\nclassification:'
+def classify_field(title, description):
+    """ Function to classify a field into one of the following categories: 
+    Problem, Solution or Idea name, Other.
 
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
+    Args:
+        title (str): field name
+        description (str): field description
+
+    Returns:
+        response: final classification
+    """
+    
+    message = f"I have a form field with the title '{title}' \
+            and the description '{description}'. Classify the title into the categories: Problem, Solution or \
+                Idea name, Other. Give only the category as an answer."
+    response = openai.ChatCompletion.create(
+            model ="gpt-3.5-turbo",
+            messages = [{"role": "system", 
+                          "content": "You are a helpful assistant."}, 
+                         {"role": "user", "content": message}],
         max_tokens=100,
-        n=1,
-        stop=None,
-        temperature=0.5
+        temperature=0.3,
     )
+    print(response.choices[0].message)
+    return response.choices[0].message['content']
 
-    classification = response.choices[0].text.strip().split('\n')
+def classify_fields(titles, descriptions):
+    classification_dict = {}
+    for title, description in zip(titles, descriptions):
+        classification = classify_field(title, description)
+        classification_dict[title] = classification
 
-    # Parse the classification into a dictionary
-    result = {}
-    current_category = None
-    for line in classification:
-        if line.endswith(':'):
-            current_category = line[:-1].strip()
-            result[current_category] = []
-        elif current_category:
-            result[current_category].append(line.strip())
+    return classification_dict
 
-    return result
+# Usage:
 
-field_names = [
-    'Descripción del Problema',
-    'Beneficios',
-    'Título de tu Idea',
-    'Propuesta',
-    'Nivel de Retorno Esperado (En Pesos)',
-    '¿A qué tipo de clientes u organizaciones podría llegar esta idea/solución?',
-    'Otros Comentarios',
-    'Autor (es) de la idea, número de identificación y proyecto o área a la que pertenecen.',
-    'Rut',
-    'Participantes',
-    '¿Qué nueva propuesta de valor, modelo de negocios o producto podría llevar SRE al mercado? / What new value proposition, business model or product could SRE bring to the market?',
-    'Beneficios para el cliente y el Banco',
-    'Lema/Slogan',
-    'Nombre Iniciativa',
-    'Propuesta de Idea / Solución',
-    '¿ Cómo responde esta idea al desafío?',
-    '¿Para implementar esta idea, cuáles son los siguientes pasos?',
-    'Alcance e impacto del Proyecto (máximo ½ página)',
-    'Impacto',
-    'Nombre de la solución',
-    'Descripción',
-    'Descripción del proyecto (máximo 2 páginas)',
-    'Inicio',
-    'Descripción de la Propuesta',
-    '% de alineamiento con el foco estratégico',
-    'Nombre ',
-    'Mecanismos de transferencia (máximo 1 página)',
-    'Nombre Completo',
-    'Teléfono',
-    'Término',
-    '¿Con qué activos cuenta SRE que podrían facilitar la implementación de este nuevo servicio, modelo de negocios o producto? / What assets does SRE have that could facilitate the implementation of this new service, business model or product?',
-    'Para implementar tu propuesta, ¿Se necesitan captar nuevos datos que hoy no están disponibles?',
-    '¿Hoy se toman decisiones en torno a la pregunta que identificaste?',
-    'Alcance',
-    'Preguntas guías',
-    '¿Por qué? ',
-    'Propuesta de valor del proyecto',
-    '¿Qué es lo que busca tu idea?',
-    '¿En que planta tiene origen tu idea?',
-    'Idea / Solución Propuesta',
-    'Nombre de Actividad'
-]
-
-classification = classify_field_names(field_names)
-print(classification)
+classification_dict = classify_fields(titles, descriptions)
