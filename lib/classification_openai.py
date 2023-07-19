@@ -94,32 +94,39 @@ def classify_fields(titles:list, descriptions:list, companies_id:list, start_ind
 
 # Usage:
 
-classification = classify_fields(titles, descriptions, companies_id, 0)
 
-class_list = []
-for i in classification:
-    if type(i) is dict:
-        class_list.append(i)
-    elif type(i) is list:
-        for j in i:
-            if type(j) is dict:
-                class_list.append(j)
+def main():
+    classification = classify_fields(titles, descriptions, companies_id, 0)
+
+    class_list = []
+    for i in classification:
+        if type(i) is dict:
+            class_list.append(i)
+        elif type(i) is list:
+            for j in i:
+                if type(j) is dict:
+                    class_list.append(j)
 
 
-new_list = []
-# Process each dictionary
-for dictionary in class_list:
-    # Get the first dictionary inside the outer dictionary
-    inner_dict = list(dictionary.values())[0]
-    # Get the first key-value pair in the inner dictionary (ignoring 'description' and 'company_id')
-    field, category = next((k, v) for k, v in inner_dict.items() if k not in ['description', 'company_id'])
-    # Create a new dictionary with the desired structure and add it to the list
-    new_list.append({
-        'company_id': inner_dict['company_id'],
-        'description': inner_dict['description'],
-        'field': field,
-        'category': category
-    })
+    new_list = []
+    # Process each dictionary
+    for dictionary in class_list:
+        # Get the first dictionary inside the outer dictionary
+        inner_dict = list(dictionary.values())[0]
+        # Get the first key-value pair in the inner dictionary (ignoring 'description' and 'company_id')
+        field, category = next((k, v) for k, v in inner_dict.items() if k not in ['description', 'company_id'])
+        # Create a new dictionary with the desired structure and add it to the list
+        new_list.append({
+            'company_id': inner_dict['company_id'],
+            'description': inner_dict['description'],
+            'field': field,
+            'category': category
+        })
 
-# Create a DataFrame from the list
-df = pd.DataFrame(new_list)
+    # Create a DataFrame from the list
+    df = pd.DataFrame(new_list)
+    
+    return df
+
+if __name__ == "__main__":
+    main()
