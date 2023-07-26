@@ -1,15 +1,15 @@
 #Modulo de funciones generales para ETL
 import os
-import json
-import requests
+import openai
+import time
+import numpy as np
 import pandas as pd
 from sqlalchemy import create_engine
 from datetime import datetime
 from dotenv import load_dotenv
 import redshift_connector
 
-today = datetime.today()#.strftime("%d-%m-%Y")
-now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
+
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 load_dotenv()
@@ -19,6 +19,11 @@ aws_db_dw = os.environ.get('aws_db_dw')
 aws_port = os.environ.get('aws_port')
 aws_user_db = os.environ.get('aws_user_db')
 aws_pass_db = os.environ.get('aws_pass_db')
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY_INNK')
+
+openai.api_key = OPENAI_API_KEY
+today = datetime.today()#.strftime("%d-%m-%Y")
+now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
 
 def get_conn(aws_host, aws_db, aws_port, aws_user_db, aws_pass_db):
     """Get connection to Redshift database
@@ -42,6 +47,7 @@ def get_conn(aws_host, aws_db, aws_port, aws_user_db, aws_pass_db):
     )
     return conn
 
+
 def connect_db(credenc:dict):
     """Crea conexión con base de datos. Datos sobre la db a la que se conecta (dev,
     dock o prod), viene dado por el diccionario que probablemente viene de funcion
@@ -59,3 +65,35 @@ def connect_db(credenc:dict):
     conexion = f'postgresql://{user}:{password}@{host}:{port}/{dbname}'
     engine = create_engine(conexion)
     return engine
+
+def get_embeddings(text:str)->list:
+    """Get embeddings for text
+
+    Args:
+        text (str): _description_
+
+    Raises:
+        e: _description_
+
+    Returns:
+        list: _description_
+    """
+    try:
+        # Call the OpenAI API
+        text = text.replace("\n", " ")
+        response = openai.Embedding.create(model="text-embedding-ada-002", input=[text])
+        # Extract the embeddings
+        embedding = response["data"][0]["embedding"]
+    except Exception as e:
+        print(f"Error occurred while getting embedding for text: {text}\n{str(e)}")
+        raise e
+    return embedding
+
+
+def ensure_columns(df:pd.DataFrame, columns:list)->pd.DataFrame:
+    """Ensure that dataframe has all columns in list"""
+    
+    for col in columns:
+        if col not in df.columns:
+            df[col] = np.nan
+    return df

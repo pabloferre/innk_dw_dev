@@ -1,6 +1,8 @@
 CREATE TABLE IF NOT EXISTS innk_dw_dev.public.fact_goals (
     id INT IDENTITY(1, 1) PRIMARY KEY NOT NULL UNIQUE,
-    id_goal_db INT,
+    goal_id_db INT,
+    idea_id INT,
+    CONSTRAINT fk_id_idea FOREIGN KEY (idea_id) REFERENCES dim_idea(id),
     company_id INT,
     CONSTRAINT fk_id_company FOREIGN KEY (id_company) REFERENCES dim_companies(id),
     category_id INT,

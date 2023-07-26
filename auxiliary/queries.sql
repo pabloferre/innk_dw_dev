@@ -34,9 +34,13 @@ order by form_id asc;
 
 
 --query para sacar las respuestas del formulario
-select ifa.idea_id as "idea_id", cff.id as "field_id",ifa.answer as "field_answer" 
+
+select ifa.idea_id as "idea_id", cff.id as "field_id",ifa.answer as "field_answer", cff.company_id as "company_id", 
+cff.title as "title", cff.description as "description", cff.form_field_id as "form_field_id", cff.form_id as "form_id",
+ideas.title as "idea_name", ideas.description as "idea_description"
 from idea_field_answers ifa 
 join company_form_fields cff on ifa.company_form_field_id = cff.id 
+join ideas on ideas.id = ifa.idea_id 
 where cff.company_id = 117;
 
 ---query para sacar las respuestas del formulario y el formulario
@@ -83,3 +87,4 @@ select objectives.id, objectives.name, objectives.description, objectives_packag
 objectives_packages.description, objectives_packages.objective_package_type 
 from public.objectives
 join public.objectives_packages on public.objectives_packages.id = objectives_package_id 
+

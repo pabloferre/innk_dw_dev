@@ -36,7 +36,6 @@ def insert_data_ctable(df:pd.DataFrame, conn:object):
         print(data)
         # Execute the batch insert
         cur.executemany(insert, data)
-        cur.close()
         # Commit the changes
         conn.commit()
         
