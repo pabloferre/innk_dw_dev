@@ -62,7 +62,7 @@ def connect_db(credenc:dict):
     password = credenc['password']
     host = credenc['host']
     port = credenc['port']       
-    conexion = f'postgresql://{user}:{password}@{host}:{port}/{dbname}'
+    conexion = f'redshift+psycopg2://{user}:{password}@{host}.amazonaws.com:{port}/{dbname}'
     engine = create_engine(conexion)
     return engine
 
@@ -97,3 +97,37 @@ def ensure_columns(df:pd.DataFrame, columns:list)->pd.DataFrame:
         if col not in df.columns:
             df[col] = np.nan
     return df
+
+def categorize(cell:str, class_dict:dict)->str:
+    """Function that categorizes a cell, if category is not found, then assigns 'None'
+    this function is for catching the errors when the cell is not found in the dictionary while
+    using the apply method.
+
+    Args:
+        cell (str): value from a cell in a data frame
+        class_dict (dict): classification dictionary
+
+    Returns:
+        str: categorization of the cell
+    """
+    try:
+        category = class_dict[cell]
+    except KeyError:
+        category = 'None'
+    
+    return category
+
+def execute_sql(query, conn):
+    """Execute sql query in database
+
+    Args:
+        query (str): sql query
+        conn (object): connection to database
+
+    Returns:
+        result: result of query
+    """
+    with conn.cursor() as cur:
+        cur.execute(query)
+        result = cur.fetchall()
+    return result

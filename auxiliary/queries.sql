@@ -88,3 +88,9 @@ objectives_packages.description, objectives_packages.objective_package_type
 from public.objectives
 join public.objectives_packages on public.objectives_packages.id = objectives_package_id 
 
+--Tabla de users
+
+select users.id, users.company_id, users.email, users.first_name, users.last_name, users."position", 
+users.contract_profile, users.area_id, ca."name" as "area", users.created_at, users.updated_at
+from users
+right join company_areas ca on ca.id = users.area_id 

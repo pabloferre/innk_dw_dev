@@ -9,7 +9,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
-from lib.general_module import get_conn, get_embeddings, ensure_columns
+from lib.general_module import get_conn, get_embeddings, ensure_columns, categorize, execute_sql
 
 today = datetime.today()#.strftime("%d-%m-%Y")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
@@ -18,29 +18,13 @@ load_dotenv()
 aws_host = os.environ.get('aws_host')
 aws_db = os.environ.get('aws_db')
 aws_db_dw = os.environ.get('aws_db_dw')
+aws_db = os.environ.get('aws_db')
 aws_port = int(os.environ.get('aws_port'))
 aws_user_db = os.environ.get('aws_user_db')
 aws_pass_db = os.environ.get('aws_pass_db')
 
 
-def categorize(cell:str, class_dict:dict)->str:
-    """Function that categorizes a cell, if category is not found, then assigns 'None'
-    this function is for catching the errors when the cell is not found in the dictionary while
-    using the apply method.
-
-    Args:
-        cell (str): value from a cell in a data frame
-        class_dict (dict): classification dictionary
-
-    Returns:
-        str: categorization of the cell
-    """
-    try:
-        category = class_dict[cell]
-    except ValueError:
-        category = 'None'
-    
-    return category
+#################################### AUXILIARY FUNCTIONS ##########################################
     
 
 def process_data(df, start_index=0):
@@ -92,6 +76,7 @@ def fill_prev_columns(row):
     return row
 
 
+################################ AUXILIARY DICTIONARIES ##########################################
 
 f_ans_dict = {'Idea name_embedded':'name_embedded','Solution 1':'solution_1', 'Solution 2':'solution_2', 
         'Solution 3':'solution_3', 'Solution 4':'solution_4', 'Solution 5':'solution_5', 'Solution 6':'solution_6', 
@@ -104,21 +89,14 @@ f_ans_dict = {'Idea name_embedded':'name_embedded','Solution 1':'solution_1', 'S
         'Problem 4_embedded':'prob_4_embedded', 'Problem 5_embedded':'prob_5_embedded',
         'Problem 6_embedded':'prob_6_embedded'}
 
-
-
-
 #Create dictionary from classification table
-conn = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
-query = "Select company_id, name, category from innk_dw_dev.public.param_class_table"
-
-with conn.cursor() as cur:
-    cur.execute(query)
-    result = cur.fetchall()
-conn.close()
+conn1 = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
+query1 = "Select company_id, name, category from innk_dw_dev.public.param_class_table"
+result1 =  execute_sql(query1, conn1)
 
 class_dict = {}
 
-df_d = pd.DataFrame(result, columns=['company_id', 'name', 'category'])   
+df_d = pd.DataFrame(result1, columns=['company_id', 'name', 'category'])   
 
 for index, row in df_d.iterrows():
     company_id = row['company_id']
@@ -129,10 +107,27 @@ for index, row in df_d.iterrows():
         class_dict[company_id] = {}
 
     class_dict[company_id][name] = category
+    
+    
+#Create dictionary from DIM_COMPANY table
+conn2 = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
+query2 = "Select id, company_db_id from innk_dw_dev.public.dim_company"
+result2 =  execute_sql(query2, conn2)
+
+comp_dic = pd.DataFrame(result2, columns=['d', 'company_db_id']).set_index('d')['company_db_id'].to_dict()   
+
+#Create dictionary from DIM_USERS table
+conn3 = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
+query3 = "Select id, idea_db_id from innk_dw_dev.public.dim_users"
+result3 =  execute_sql(query3, conn3)
+user_dic = pd.DataFrame(result3, columns=['id', 'idea_db_id']).set_index('idea_db_id')['id'].to_dict() 
+     
+###################################################################################################
+
 
 #Classify form field answers from database
 
-df_f = pd.read_json(r'H:\Mi unidad\Innk\form_with_answers_117.json')
+df_f = pd.read_json(r'H:\Mi unidad\Innk\form_with_answers_117.json') #Cambiar en ETL final
 df_f['category'] = df_f.apply(lambda x: categorize(x['field_title'], class_dict[x['company_id']]), axis=1)
 
 #Get embeddeds from database
@@ -184,29 +179,31 @@ df_grouped = ensure_columns(df_grouped, list(f_ans_dict.values()))
 df_grouped.replace([None, ''], np.nan, inplace=True)
 #df_grouped = df_grouped.apply(fill_prev_columns, axis=1)
 df_grouped.reset_index(inplace=True)
-df_grouped.rename(columns={'description_y':'description', 'company_id_x':'company_id', 'category_y':'category'}, inplace=True)
+df_grouped.rename(columns={'description_y':'description', 'company_id_x':'company_id', 'category_y':'category'},
+                  inplace=True)
 df_final = df_grouped[final_columns].apply(fill_prev_columns, axis=1)
 df_final['valid_from'] = today
 df_final['valid_to'] = '9999-12-31'
 df_final['is_current'] = True
 
-#################### SACAR ESTO CUANDO SE DEJE DE TRABAJAR CON EXCEL ##############################
+#################### SACAR ESTO CUANDO SE DEJE DE TRABAJAR CON EXCEL ############################## Parece que no
 df_final['valid_from'] = df_final['valid_from'].dt.tz_localize(None)
 df_final['created_at'] = df_final['created_at'].dt.tz_localize(None)
 df_final['updated_at'] = df_final['updated_at'].dt.tz_localize(None)
 df_final['submited_at'] = df_final['submited_at'].dt.tz_localize(None)
 ###################################################################################################
 
-df_final_dim_idea = df_final[['idea_db_id', 'tag_name','tag_description', 'tag_type', 'company_id',
-                'is_private', 'user_id', 'category', 'stage', 'like_ideas_count', 
+df_final_dim_idea = df_final[['idea_db_id', 'tag_name','tag_description', 'tag_type',
+                'is_private','category', 'stage', 'like_ideas_count', 
                 'average_general', 'name', 'description', 'problem_1', 'solution_1', 'problem_2', 
                 'solution_2', 'problem_3', 'solution_3', 'problem_4', 'solution_4', 'problem_5', 
                 'solution_5', 'problem_6', 'solution_6', 'name_embedded','prob_1_embedded', 'sol_1_embedded',
                 'prob_2_embedded', 'sol_2_embedded', 'prob_3_embedded', 'sol_3_embedded','prob_4_embedded',
                 'sol_4_embedded', 'prob_5_embedded', 'sol_5_embedded','prob_6_embedded', 'sol_6_embedded', 
-                'valid_from', 'created_at', 'updated_at','valid_to', 'is_current']]
+                 'created_at', 'updated_at', 'valid_from', 'valid_to', 'is_current']]
 
 df_final_fact_sub_idea = df_final[['idea_db_id', 'company_id', 'user_id', 'submited_at']]
+df_final_fact_sub_idea.loc[:,'company_id'] = df_final_fact_sub_idea.loc[:,'company_id'].apply(lambda x: categorize(x, comp_dic))
+df_final_fact_sub_idea.loc[:,'user_id'] = df_final_fact_sub_idea.loc[:,'idea_db_id'].apply(lambda x: categorize(x, user_dic))
 
-                              
 
