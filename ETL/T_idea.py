@@ -203,6 +203,7 @@ df_final_dim_idea = df_final[['idea_db_id', 'tag_name','tag_description', 'tag_t
                  'created_at', 'updated_at', 'valid_from', 'valid_to', 'is_current']]
 
 df_final_fact_sub_idea = df_final[['idea_db_id', 'company_id', 'user_id', 'submited_at']]
+df_final_fact_sub_idea.replace({pd.NaT: None}, inplace=True)
 df_final_fact_sub_idea.loc[:,'company_id'] = df_final_fact_sub_idea.loc[:,'company_id'].apply(lambda x: categorize(x, comp_dic))
 df_final_fact_sub_idea.loc[:,'user_id'] = df_final_fact_sub_idea.loc[:,'idea_db_id'].apply(lambda x: categorize(x, user_dic))
 

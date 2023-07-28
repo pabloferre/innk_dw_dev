@@ -30,16 +30,8 @@ aws_pass_db = os.environ.get('aws_pass_db')
 def insert_data(df, conn):
     """Insert data into ideas table in database"""
 
-    insert = """INSERT INTO innk_dw_dev.public.dim_idea (idea_db_id, tag_name, tag_description, tag_type,
-       is_private, category, stage, like_ideas_count, average_general, name, description,
-       problem_1, solution_1, problem_2, solution_2, problem_3, solution_3, problem_4, solution_4, problem_5, solution_5,
-       problem_6, solution_6, name_embedded, prob_1_embedded, sol_1_embedded, prob_2_embedded, sol_2_embedded,
-       prob_3_embedded, sol_3_embedded, prob_4_embedded,
-       sol_4_embedded, prob_5_embedded, sol_5_embedded,
-       prob_6_embedded, sol_6_embedded, created_at,
-       updated_at, valid_from, valid_to, is_current) \
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
-        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    insert = """INSERT INTO innk_dw_dev.public.fact_submitted_idea (idea_id, company_id, user_id, submitted_at) \
+    VALUES (%s, %s, %s, %s)
     """
     data = list(df.itertuples(index=False, name=None))
     with conn.cursor() as cur:
@@ -48,16 +40,16 @@ def insert_data(df, conn):
         # Commit the changes
         conn.commit()
     conn.close()
-    return None
+    return Nonegit ad
 
 
 
 
 def main():
-    conn = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
-    dim_idea = pd.read_excel(r'H:\Mi unidad\Innk\dim_idea.xlsx')
-    dim_idea.drop(columns=['company_id', 'user_id'], inplace=True)
-    insert_data(dim_idea, conn)
     
+    fact_sub_idea = pd.read_excel(r'H:\Mi unidad\Innk\fact_sub_idea.xlsx')
+    conn = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
+    insert_data(fact_sub_idea, conn)
+    conn.close()
 if __name__=='__main__':
     main() 

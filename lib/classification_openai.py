@@ -43,7 +43,7 @@ def classify_field(title:str, description:str):
     return response.choices[0].message['content']
 
 
-def classify_fields(titles:list, descriptions:list, companies_id:list, start_index=0)->dict:
+def classify_fields_complete(titles:list, descriptions:list, companies_id:list, start_index=0)->dict:
     """Function that iterates through a list of titles and descriptions and classifies them using the 
     classify_field function. 
 
@@ -96,7 +96,7 @@ def classify_fields(titles:list, descriptions:list, companies_id:list, start_ind
 
 
 def main():
-    classification = classify_fields(titles, descriptions, companies_id, 0)
+    classification = classify_fields_complete(titles, descriptions, companies_id, 0)
 
     class_list = []
     for i in classification:
