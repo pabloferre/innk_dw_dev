@@ -1,8 +1,6 @@
 # Load libraries
 import os
 import sys
-import traceback
-import time
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -10,6 +8,7 @@ from dotenv import load_dotenv
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 print(path)
 os.chdir(path)
+sys.path.insert(0, path)
 from lib.general_module import get_conn
 
 today = datetime.today()#.strftime("%d-%m-%Y")
@@ -30,8 +29,9 @@ aws_pass_db = os.environ.get('aws_pass_db')
 def insert_data(df, conn):
     """Insert data into ideas table in database"""
 
-    insert = """INSERT INTO innk_dw_dev.public.fact_submitted_idea (idea_id, company_id, user_id, submitted_at) \
-    VALUES (%s, %s, %s, %s)
+    insert = """INSERT INTO innk_dw_dev.public.fact_submitted_idea (idea_id, company_id, user_id_1, \
+    user_id_2, user_id_3, user_id_4, users, submitted_at) \
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
     data = list(df.itertuples(index=False, name=None))
     with conn.cursor() as cur:
@@ -40,16 +40,17 @@ def insert_data(df, conn):
         # Commit the changes
         conn.commit()
     conn.close()
-    return Nonegit ad
+    return None
 
 
 
 
-def main():
+def main(path):
     
-    fact_sub_idea = pd.read_excel(r'H:\Mi unidad\Innk\fact_sub_idea.xlsx')
+    fact_sub_idea = pd.read_excel(path)
     conn = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
     insert_data(fact_sub_idea, conn)
     conn.close()
 if __name__=='__main__':
-    main() 
+    path = sys.argv[1]    
+    main(path) 
