@@ -140,7 +140,10 @@ df_f = pd.read_json(r'H:\Mi unidad\Innk\form_with_answers_117.json') #Cambiar en
 df_f['category'] = df_f.apply(lambda x: categorize(x['field_title'], class_dict[x['company_id']]), axis=1)
 
 #Get embeddeds from database
-/
+df_1 = df_f.loc[df_f['category']!='Other',].copy().reset_index(drop=True)
+df_1['ada_embedded'] = None
+df_1 = process_data(df_1)
+df_1.rename(columns={'field_answer':'description'}, inplace=True)
 
 #Get main idea table and tag_table to merge it with the embeddeds
 

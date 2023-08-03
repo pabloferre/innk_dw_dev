@@ -20,8 +20,10 @@ aws_port = os.environ.get('aws_port')
 aws_user_db = os.environ.get('aws_user_db')
 aws_pass_db = os.environ.get('aws_pass_db')
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY_INNK')
+OPENAI_ORG_ID = os.environ.get('OPENAI_ORG_ID_INNK')
 
 openai.api_key = OPENAI_API_KEY
+openai.organization = OPENAI_ORG_ID
 today = datetime.today()#.strftime("%d-%m-%Y")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
 
@@ -117,7 +119,7 @@ def categorize(cell:str, class_dict:dict)->str:
     
     return category
 
-def execute_sql(query, conn):
+def execute_sql(query:str, conn):
     """Execute sql query in database
 
     Args:

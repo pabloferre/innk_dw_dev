@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from dotenv import load_dotenv
+import openai
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 sys.path.insert(0, path)
@@ -77,11 +78,15 @@ def process_data(df:pd.DataFrame, start_index=0)->pd.DataFrame:
         print(index)
         try:
             embedding = get_embeddings(row['field_answer'])
-            
             # Save the embedding in a new column
             df.at[index, 'ada_embedded'] = np.array(embedding).tolist()
             # Sleep to respect API rate limits
             time.sleep(1)  # Adjust based on your rate limit
+            if index == length:
+                return df
+        except openai.error.APIConnectionError:
+            print(index)
+            return df
         except ValueError:
             #IF THE VALUE ERROR IS RAISED, CHECK IF THE FINAL INDEX IS CORRECT WITH THE NUMBER OF ROWS
             print('ValueError, check if the final index is correct. Final index: ', index)
@@ -131,6 +136,6 @@ df_forms_ans['category'] = df_forms_ans.apply(lambda x: categorize(x['title'], c
 #Get embeddeds from database
 df_emb = df_forms_ans.loc[~df_forms_ans['category'].isin(['Other','None']),].copy().reset_index(drop=True)
 df_emb['ada_embedded'] = None
-df_emb = process_data(df_emb)
+df_emb = process_data(df_emb, 13255)
 df_emb.rename(columns={'field_answer':'description'}, inplace=True)
 
