@@ -76,14 +76,14 @@ def process_data(df:pd.DataFrame, start_index=0)->pd.DataFrame:
     for i, row in df.iterrows():
         index = i + start_index
         print(index)
+        if (index-1)  >= length:
+                return df
         try:
             embedding = get_embeddings(row['field_answer'])
             # Save the embedding in a new column
             df.at[index, 'ada_embedded'] = np.array(embedding).tolist()
             # Sleep to respect API rate limits
             time.sleep(1)  # Adjust based on your rate limit
-            if index == length:
-                return df
         except openai.error.APIConnectionError:
             print(index)
             return df
@@ -95,7 +95,7 @@ def process_data(df:pd.DataFrame, start_index=0)->pd.DataFrame:
             print(traceback.format_exc())
             print('Error in index:', index, 'Resuming in 2 seconds...')
             time.sleep(2)
-            process_data(df, index)
+            df = process_data(df, index)
     return df
 
 
