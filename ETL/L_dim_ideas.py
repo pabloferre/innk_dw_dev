@@ -51,6 +51,40 @@ def insert_data(df, conn):
     return None
 
 
+import pandas as pd
+import psycopg2
+
+# Connect to the Redshift database
+conn = psycopg2.connect(database="your_database", user="your_username",
+                        password="your_password", host="your_redshift_host", port="your_port")
+
+# Read the data you wish to upload into a DataFrame
+df_to_upload = pd.read_csv("your_data.csv")
+
+# Use the COPY command to upload the data to a temporary staging table
+# Make sure to create the temporary staging table in Redshift first
+with conn.cursor() as cursor:
+    copy_query = f"COPY your_staging_table FROM 's3://your_s3_bucket/your_data.csv' CREDENTIALS 'aws_access_key_id=YOUR_ACCESS_KEY;aws_secret_access_key=YOUR_SECRET_KEY' CSV;"
+    cursor.execute(copy_query)
+
+# Write the INSERT query with ON CONFLICT clause to handle updates and inserts
+insert_query = """
+    INSERT INTO your_main_table (idea_db_id, company_id, column1, column2, ...)
+    SELECT idea_db_id, company_id, column1, column2, ...
+    FROM your_staging_table
+    ON CONFLICT (idea_db_id, company_id) DO NOTHING;
+"""
+
+# Execute the INSERT query to update/insert data into the main table
+with conn.cursor() as cursor:
+    cursor.execute(insert_query)
+
+# Commit the changes and close the connection
+conn.commit()
+conn.close()
+
+
+
 
 
 def main():

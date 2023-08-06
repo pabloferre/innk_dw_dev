@@ -29,6 +29,18 @@ path_to_drive = os.environ.get('path_to_drive')
 
 
 ######################## AUXILIARY DICTIONARIES #########################################
+
+f_ans_dict = {'Idea name_embedded':'name_embedded','Solution 1':'solution_1', 'Solution 2':'solution_2', 
+        'Solution 3':'solution_3', 'Solution 4':'solution_4', 'Solution 5':'solution_5', 'Solution 6':'solution_6', 
+        'Problem 1':'problem_1', 'Problem 2':'problem_2', 'Problem 3':'problem_3', 'Problem 4':'problem_4', 
+        'Problem 5':'problem_5', 'Problem 6':'problem_6', 'Solution 1_embedded':'sol_1_embedded',
+        'Solution 2_embedded':'sol_2_embedded', 'Solution 3_embedded':'sol_3_embedded',
+        'Solution 4_embedded':'sol_4_embedded', 'Solution 5_embedded':'sol_5_embedded', 
+        'Solution 6_embedded':'sol_6_embedded', 'Problem 1_embedded':'prob_1_embedded',
+        'Problem 2_embedded':'prob_2_embedded', 'Problem 3_embedded':'prob_3_embedded',
+        'Problem 4_embedded':'prob_4_embedded', 'Problem 5_embedded':'prob_5_embedded',
+        'Problem 6_embedded':'prob_6_embedded'}
+
 #Nested dictionary for company forms
 conn1 = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
 query1 = "Select company_id, name, category from innk_dw_dev.public.param_class_table"
@@ -136,6 +148,66 @@ df_forms_ans['category'] = df_forms_ans.apply(lambda x: categorize(x['title'], c
 #Get embeddeds from database
 df_emb = df_forms_ans.loc[~df_forms_ans['category'].isin(['Other','None']),].copy().reset_index(drop=True)
 df_emb['ada_embedded'] = None
-df_emb = process_data(df_emb, 13255)
-df_emb.rename(columns={'field_answer':'description'}, inplace=True)
+df_emb = process_data(df_emb)
+df_emb.rename(columns={'field_answer':'description_field'}, inplace=True)
 
+#Get main idea table and tag_table to merge it with the embeddeds
+
+df_idea = pd.read_json(path_to_drive + r'raw/ideas_table.json')
+df_idea.rename(columns={'title':'idea_title'}, inplace=True)
+
+df_ideas_tags = pd.read_json(path_to_drive + r'raw/ideas_tags_table.json')
+df_ideas_tags.rename(columns={'name':'tag_name', 'description':'tag_description'}, inplace=True)
+
+df_stg = pd.merge(df_idea, df_emb, how='right', right_on='idea_id', left_on='id')
+df_stg = pd.merge(df_stg, df_ideas_tags, how='left', on='idea_id')
+df_stg.rename(columns={'id':'idea_db_id'}, inplace=True)
+
+stg_columns = ['idea_db_id', 'company_id_x', 'user_id', 'tag_name', 'tag_description', 'tag_type', 'is_private', 
+                  'stage', 'like_ideas_count', 'average_general', 'idea_title', 'description_field', 
+                 'category_y','created_at', 'updated_at', 'submited_at','ada_embedded']
+df_stg = df_stg[stg_columns]
+
+# Then, apply the function to create new columns
+for category in df_stg['category_y'].unique():
+    df_stg[category] = df_stg.loc[df_stg['category_y'] == category, 'description_field']
+    df_stg[str(category)+'_embedded'] = df_stg.loc[df_stg['category_y'] == category, 'ada_embedded']
+
+final_columns =['idea_db_id', 'company_id', 'user_id', 'tag_name', 'tag_description', 'tag_type', 'is_private', 
+                  'stage', 'like_ideas_count', 'average_general', 'name', 'description', 
+                 'category','created_at', 'updated_at', 'submited_at','name_embedded', 'solution_1', 'solution_2',
+                 'solution_3', 'solution_4', 'solution_5', 'solution_6', 'problem_1', 'problem_2', 'problem_3', 'problem_4',
+                 'problem_5', 'problem_6', 'sol_1_embedded', 'sol_2_embedded', 'sol_3_embedded', 'sol_4_embedded',
+                 'sol_5_embedded', 'sol_6_embedded', 'prob_1_embedded', 'prob_2_embedded', 'prob_3_embedded',
+                 'prob_4_embedded', 'prob_5_embedded', 'prob_6_embedded']
+
+df_grouped = df_stg.groupby('idea_db_id').agg(lambda x: np.nan if x.isna().all() else x.dropna().iloc[0])
+df_grouped.rename(columns=f_ans_dict, inplace=True)
+df_grouped = ensure_columns(df_grouped, list(f_ans_dict.values()))
+df_grouped.replace([None, ''], np.nan, inplace=True)
+df_grouped.reset_index(inplace=True)
+df_grouped.rename(columns={'description_field':'description', 'company_id_x':'company_id', 
+                           'category_y':'category', 'Idea name':'name'}, inplace=True)
+df_final = df_grouped[final_columns].apply(fill_prev_columns, axis=1)
+df_final['valid_from'] = today
+df_final['valid_to'] = '9999-12-31'
+df_final['is_current'] = True
+
+df_final_dim_idea = df_final[['idea_db_id', 'tag_name','tag_description', 'tag_type',
+                'is_private','category', 'stage', 'like_ideas_count', 
+                'average_general', 'name', 'description', 'problem_1', 'solution_1', 'problem_2', 
+                'solution_2', 'problem_3', 'solution_3', 'problem_4', 'solution_4', 'problem_5', 
+                'solution_5', 'problem_6', 'solution_6', 'name_embedded','prob_1_embedded', 'sol_1_embedded',
+                'prob_2_embedded', 'sol_2_embedded', 'prob_3_embedded', 'sol_3_embedded','prob_4_embedded',
+                'sol_4_embedded', 'prob_5_embedded', 'sol_5_embedded','prob_6_embedded', 'sol_6_embedded', 
+                 'created_at', 'updated_at', 'valid_from', 'valid_to', 'is_current']]
+
+
+df_final_fact_sub_idea = df_final[['idea_db_id', 'company_id', 'submited_at']]
+df_final_fact_sub_idea.replace({pd.NaT: None}, inplace=True)
+df_final_fact_sub_idea.loc[:,'company_id'] = df_final_fact_sub_idea.loc[:,'company_id'].apply(lambda x: categorize(x, comp_dic))
+df_final_fact_sub_idea.loc[:,'user_id'] = df_final_fact_sub_idea.loc[:,'idea_db_id'].apply(lambda x: categorize(x, user_dic))
+df_final_fact_sub_idea[['company_id', 'user_id']] = df_final_fact_sub_idea[['company_id', 'user_id']].replace('None', np.nan)
+
+df_final_dim_idea.to_parquet(path_to_drive + r'stage/dim_idea.parquet', index=False)
+df_final_fact_sub_idea.to_parquet(path_to_drive + r'stage/fact_sub_idea.parquet', index=False)
