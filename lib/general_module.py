@@ -50,7 +50,7 @@ def get_conn(aws_host, aws_db, aws_port, aws_user_db, aws_pass_db):
     return conn
 
 
-def connect_db(credenc:dict):
+def connect_db(aws_host, aws_db, aws_port, aws_user_db, aws_pass_db):
     """Crea conexión con base de datos. Datos sobre la db a la que se conecta (dev,
     dock o prod), viene dado por el diccionario que probablemente viene de funcion
     get_credentials a la que se le debe especificar el ambiente.
@@ -58,13 +58,8 @@ def connect_db(credenc:dict):
         credenc (dict): diccionario con credenciales de acceso a db
     Returns:
        engine: engine for db connection
-    """
-    dbname = credenc['dbname']
-    user = credenc['user']
-    password = credenc['password']
-    host = credenc['host']
-    port = credenc['port']       
-    conexion = f'redshift+psycopg2://{user}:{password}@{host}.amazonaws.com:{port}/{dbname}'
+    """   
+    conexion = f'redshift+psycopg2://{aws_user_db}:{aws_pass_db}@{aws_host}:{aws_port}/{aws_db}'
     engine = create_engine(conexion)
     return engine
 

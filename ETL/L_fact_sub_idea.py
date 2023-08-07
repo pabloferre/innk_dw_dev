@@ -14,6 +14,12 @@ from lib.general_module import get_conn
 today = datetime.today()#.strftime("%d-%m-%Y")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
 
+
+##### Dependencies: E_ideas_form_field_answers.py > T_ideas.py > T_fact_sub_idea.py ###############
+
+
+
+###############################ENVIRONMENT VARIABLES#####################################
 load_dotenv()
 aws_host = os.environ.get('aws_host')
 aws_db = os.environ.get('aws_db')
@@ -22,7 +28,7 @@ aws_db = os.environ.get('aws_db')
 aws_port = int(os.environ.get('aws_port'))
 aws_user_db = os.environ.get('aws_user_db')
 aws_pass_db = os.environ.get('aws_pass_db')
-
+path_to_drive = os.environ.get('path_to_drive')
 
 ######################## AUXILIARY FUNCTIONS #########################################
 
@@ -41,8 +47,6 @@ def insert_data(df, conn):
         conn.commit()
     conn.close()
     return None
-
-
 
 
 def main(path):

@@ -15,6 +15,11 @@ from lib.general_module import get_conn
 today = datetime.today()#.strftime("%d-%m-%Y")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
 
+
+##### Dependencies: E_ideas_form_field_answers.py > T_ideas.py ###############
+
+
+###############################ENVIRONMENT VARIABLES#####################################
 load_dotenv()
 aws_host = os.environ.get('aws_host')
 aws_db = os.environ.get('aws_db')
@@ -23,9 +28,24 @@ aws_db = os.environ.get('aws_db')
 aws_port = int(os.environ.get('aws_port'))
 aws_user_db = os.environ.get('aws_user_db')
 aws_pass_db = os.environ.get('aws_pass_db')
+path_to_drive = os.environ.get('path_to_drive')
 
 
 ######################## AUXILIARY FUNCTIONS #########################################
+
+
+def check_existing_records(df, conn):
+    """Check if records in the DataFrame already exist in the database"""
+    existing_ids = set()
+
+    # Fetch existing idea_db_ids from the database
+    with conn.cursor() as cur:
+        cur.execute("SELECT idea_db_id FROM innk_dw_dev.public.dim_idea")
+        existing_ids.update(row[0] for row in cur.fetchall())
+
+    # Filter out existing records from the DataFrame
+    new_records = df[~df['idea_db_id'].isin(existing_ids)]
+    return new_records
 
 def insert_data(df, conn):
     """Insert data into ideas table in database"""
@@ -51,46 +71,12 @@ def insert_data(df, conn):
     return None
 
 
-import pandas as pd
-import psycopg2
-
-# Connect to the Redshift database
-conn = psycopg2.connect(database="your_database", user="your_username",
-                        password="your_password", host="your_redshift_host", port="your_port")
-
-# Read the data you wish to upload into a DataFrame
-df_to_upload = pd.read_csv("your_data.csv")
-
-# Use the COPY command to upload the data to a temporary staging table
-# Make sure to create the temporary staging table in Redshift first
-with conn.cursor() as cursor:
-    copy_query = f"COPY your_staging_table FROM 's3://your_s3_bucket/your_data.csv' CREDENTIALS 'aws_access_key_id=YOUR_ACCESS_KEY;aws_secret_access_key=YOUR_SECRET_KEY' CSV;"
-    cursor.execute(copy_query)
-
-# Write the INSERT query with ON CONFLICT clause to handle updates and inserts
-insert_query = """
-    INSERT INTO your_main_table (idea_db_id, company_id, column1, column2, ...)
-    SELECT idea_db_id, company_id, column1, column2, ...
-    FROM your_staging_table
-    ON CONFLICT (idea_db_id, company_id) DO NOTHING;
-"""
-
-# Execute the INSERT query to update/insert data into the main table
-with conn.cursor() as cursor:
-    cursor.execute(insert_query)
-
-# Commit the changes and close the connection
-conn.commit()
-conn.close()
-
-
-
-
 
 def main():
     conn = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
-    dim_idea = pd.read_excel(r'H:\Mi unidad\Innk\dim_idea.xlsx')
-    dim_idea.drop(columns=['company_id', 'user_id'], inplace=True)
+    dim_idea = pd.read_parquet(path_to_drive + 'stage/dim_idea.parquet')
+    dim_idea = check_existing_records(dim_idea, conn)
+    #dim_idea.drop(columns=['company_id', 'user_id'], inplace=True)
     insert_data(dim_idea, conn)
     
 if __name__=='__main__':
