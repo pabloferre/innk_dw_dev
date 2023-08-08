@@ -3,11 +3,13 @@ import os
 import sys
 import traceback
 import json
+import numpy as np
 import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
+sys.path.insert(0, path)
 from lib.general_module import get_conn, categorize, execute_sql
 
 today = datetime.today()#.strftime("%d-%m-%Y")
@@ -54,7 +56,7 @@ idea_dic = pd.DataFrame(result1, columns=['id', 'idea_db_id']).set_index('idea_d
 
 def main():
     df_collaborations = pd.read_json(path_to_drive + 'raw/collaborations.json')
-    df_fact_sub_idea = pd.read_parquet(path_to_drive + 'stage/fact_sub_idea.parquet')
+    df_fact_sub_idea = pd.read_parquet(path_to_drive + 'raw/fact_sub_idea.parquet')
 
     # sort the data frame if necessary, this is to ensure the order of user_id's for each idea_id
     df_collaborations.sort_values(by=['idea_id'], inplace=True)
@@ -97,19 +99,21 @@ def main():
 
     # Merge the JSON data back to the first part
     df_final = pd.merge(df_first_part, df_second_part, on='idea_id', how='left')
-    #df_final.rename(columns={'json_column':'users'}, inplace=True)
+
 
     df_final_fact_sub_idea = pd.merge(df_fact_sub_idea, df_final, left_on='idea_db_id', right_on='idea_id', how='left')
     df_final_fact_sub_idea['idea_id'] = df_final_fact_sub_idea['idea_db_id'].apply(lambda x: categorize(x, idea_dic))
     df_final_fact_sub_idea = df_final_fact_sub_idea[['idea_id', 'company_id', 'user_id_1', 'user_id_2', 'user_id_3',
                                                     'user_id_4', 'users', 'submited_at']]
-    df_final_fact_sub_idea['submited_at'].fillna(pd.Timestamp('0001-01-01'), inplace=True)
+    
     #df_final_fact_sub_idea['submited_at'] = df_final_fact_sub_idea['submited_at'].dt.tz_localize(None)
-
-    df_final_fact_sub_idea[['user_id_1', 'user_id_2', 'user_id_3', 'user_id_4']] = df_final_fact_sub_idea[['user_id_1', 
-                                                    'user_id_2', 'user_id_3', 'user_id_4']].astype(str)
-
-    df_fact_sub_idea.to_parquet(path_to_drive + 'stage/fact_sub_idea.parquet', index=False)
+    user_cols =['company_id', 'user_id_1', 'user_id_2', 'user_id_3', 'user_id_4']
+    df_final_fact_sub_idea[user_cols] = df_final_fact_sub_idea[user_cols].replace(np.nan, 0)
+    df_final_fact_sub_idea[user_cols] = df_final_fact_sub_idea[user_cols].replace('None', 0)
+    df_final_fact_sub_idea[['company_id', 'user_id_1', 'user_id_2', 'user_id_3', 'user_id_4']] = df_final_fact_sub_idea[['company_id',
+                                                                                            'user_id_1', 'user_id_2', 'user_id_3', 'user_id_4']].astype(int)
+    df_final_fact_sub_idea['submited_at'] = df_fact_sub_idea['submited_at'].replace({None: '1900-01-01 00:00:00'})
+    df_final_fact_sub_idea.to_parquet(path_to_drive + 'stage/fact_sub_idea.parquet', index=False)
     
     return None
 

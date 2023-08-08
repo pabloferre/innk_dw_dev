@@ -6,7 +6,7 @@ import numpy as np
 from datetime import datetime
 from dotenv import load_dotenv
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-print(path)
+
 os.chdir(path)
 sys.path.insert(0, path)
 from lib.general_module import get_conn
@@ -51,10 +51,12 @@ def insert_data(df, conn):
 
 def main(path):
     
-    fact_sub_idea = pd.read_excel(path)
+    fact_sub_idea = pd.read_parquet(path)
+    print(fact_sub_idea.tail())
     conn = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
     insert_data(fact_sub_idea, conn)
-    conn.close()
+    return None
+
 if __name__=='__main__':
     path = sys.argv[1]    
     main(path) 
