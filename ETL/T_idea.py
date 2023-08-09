@@ -86,7 +86,7 @@ result4 = execute_sql(query4, conn4)
 idea_dic = pd.DataFrame(result4, columns=['id', 'idea_db_id']).set_index('idea_db_id')['id'].to_dict()
 
 #################################AUXILIARY FUNCTIONS############################################
-
+'''
 def process_data(df:pd.DataFrame, start_index=0)->pd.DataFrame:
     """Function that processes the data frame and returns a new data frame with the embeddings"""
     length = len(df)
@@ -113,9 +113,48 @@ def process_data(df:pd.DataFrame, start_index=0)->pd.DataFrame:
             print('Error in index:', index, 'Resuming in 2 seconds...')
             time.sleep(2)
             df = process_data(df, index)
+    return df'''
+
+def process_data(df: pd.DataFrame, start_index=0) -> pd.DataFrame:
+    """Function that processes the data frame and returns a new data frame with the embeddings"""
+    length = len(df)
+    MAX_RETRIES = 25
+
+    for i, row in df.iterrows():
+        index = i + start_index
+        print(index)
+        if (index-1) >= length:
+            return df
+
+        retries = 0
+        success = False
+
+        while retries < MAX_RETRIES and not success:
+            try:
+                embedding = get_embeddings(row['field_answer'])
+                df.at[index, 'ada_embedded'] = np.array(embedding).tolist()
+                success = True  # Mark as successful to exit the while loop
+                time.sleep(1)  # Adjust based on your rate limit
+
+            except openai.error.APIConnectionError:
+                retries += 1
+                backoff_time = 2 * retries  # Exponential backoff
+                print(f'APIConnectionError at index {index}. Retrying in {backoff_time} seconds...')
+                time.sleep(backoff_time)
+
+            except ValueError:
+                print('ValueError, check if the final index is correct. Final index:', index)
+                return df
+                
+            except Exception as e:
+                print(traceback.format_exc())
+                print(f'Error in index: {index}. Skipping to next entry.')
+                break  # exit the while loop and continue with the next row
+        
+        if retries >= MAX_RETRIES:
+            print(f"Maximum retries reached for index {index}. Skipping to next entry.")
+
     return df
-
-
 
 def fill_prev_columns(row:pd.Series)->pd.Series:
     """Function that fills the previous columns with the last non-nan value
@@ -133,7 +172,15 @@ def fill_prev_columns(row:pd.Series)->pd.Series:
     sol_emb_columns = [f"sol_{i+1}_embedded" for i in range(6)]
 
     for columns in [problem_columns, solution_columns, prob_emb_columns, sol_emb_columns]:
-        non_empty_cols = [col for col in columns if not pd.isnull(row[col])]
+        non_empty_cols = []
+        for col in columns:
+            value = row[col]
+            try:
+                if not pd.isnull(value):
+                    non_empty_cols.append(col)
+            except ValueError:
+                non_empty_cols.append(col)
+        
         # Shift values to the left
         for i, col in enumerate(columns):
             row[col] = row[non_empty_cols[i]] if i < len(non_empty_cols) else np.nan
@@ -154,7 +201,6 @@ def main():
     #Get embeddeds from database
     df_emb = df_forms_ans.loc[~df_forms_ans['category'].isin(['Other','None']),].copy().reset_index(drop=True)
     df_emb['ada_embedded'] = None
-    df_emb = df_emb.loc[df_emb.loc[:, 'company_id']==117, :].copy().reset_index(drop=True) ###SACAR ESTO NO VA
     df_emb = process_data(df_emb)
     df_emb.rename(columns={'field_answer':'description_field'}, inplace=True)
     df_emb.to_parquet(path_to_drive + r'temp_ideas_embedded.parquet') #Temp file to save the embeddeds
@@ -196,7 +242,8 @@ def main():
     df_grouped.reset_index(inplace=True)
     df_grouped.rename(columns={'description_field':'description', 'company_id_x':'company_id', 
                             'category_y':'category', 'Idea name':'name'}, inplace=True)
-    df_final = df_grouped[final_columns].apply(fill_prev_columns, axis=1)
+    df_final = df_grouped[final_columns]
+    df_final = df_final.apply(fill_prev_columns, axis=1)
     df_final['valid_from'] = today
     df_final['valid_to'] = '9999-12-31'
     df_final['is_current'] = True
