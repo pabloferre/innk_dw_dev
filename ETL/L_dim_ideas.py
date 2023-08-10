@@ -8,8 +8,8 @@ import numpy as np
 from datetime import datetime
 from dotenv import load_dotenv
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-print(path)
 os.chdir(path)
+sys.path.insert(0, path)
 from lib.general_module import get_conn
 
 today = datetime.today()#.strftime("%d-%m-%Y")
@@ -74,7 +74,7 @@ def insert_data(df, conn):
 
 def main():
     conn = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
-    dim_idea = pd.read_parquet(path_to_drive + 'stage/dim_idea.parquet')
+    dim_idea = pd.read_parquet(path_to_drive + r'stage/dim_idea.parquet')
     dim_idea = check_existing_records(dim_idea, conn)
     #dim_idea.drop(columns=['company_id', 'user_id'], inplace=True)
     insert_data(dim_idea, conn)

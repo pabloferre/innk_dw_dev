@@ -247,17 +247,22 @@ def main():
     df_final['valid_from'] = today
     df_final['valid_to'] = '9999-12-31'
     df_final['is_current'] = True
-
-    df_final_dim_idea = df_final[['idea_db_id', 'tag_name','tag_description', 'tag_type',
+    final_cols = ['idea_db_id', 'tag_name','tag_description', 'tag_type',
                     'is_private','category', 'stage', 'like_ideas_count', 
                     'average_general', 'name', 'description', 'problem_1', 'solution_1', 'problem_2', 
                     'solution_2', 'problem_3', 'solution_3', 'problem_4', 'solution_4', 'problem_5', 
                     'solution_5', 'problem_6', 'solution_6', 'name_embedded','prob_1_embedded', 'sol_1_embedded',
                     'prob_2_embedded', 'sol_2_embedded', 'prob_3_embedded', 'sol_3_embedded','prob_4_embedded',
                     'sol_4_embedded', 'prob_5_embedded', 'sol_5_embedded','prob_6_embedded', 'sol_6_embedded', 
-                    'created_at', 'updated_at', 'valid_from', 'valid_to', 'is_current']]
-
-
+                    'created_at', 'updated_at', 'valid_from', 'valid_to', 'is_current']
+    df_final_dim_idea = df_final[final_cols]
+    emb_cols = ['name_embedded','prob_1_embedded', 'sol_1_embedded',
+                    'prob_2_embedded', 'sol_2_embedded', 'prob_3_embedded', 
+                    'sol_3_embedded','prob_4_embedded', 'sol_4_embedded', 
+                    'prob_5_embedded', 'sol_5_embedded','prob_6_embedded', 
+                    'sol_6_embedded']
+    df_final_dim_idea[emb_cols] = df_final_dim_idea[emb_cols].astype(str)
+    
     df_final_fact_sub_idea = df_final[['idea_db_id', 'company_id', 'submited_at']]
     df_final_fact_sub_idea.replace({pd.NaT: None}, inplace=True)
     df_final_fact_sub_idea.loc[:,'company_id'] = df_final_fact_sub_idea.loc[:,'company_id'].apply(lambda x: categorize(x, comp_dic))
