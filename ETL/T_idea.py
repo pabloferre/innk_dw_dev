@@ -137,19 +137,20 @@ def process_data(df: pd.DataFrame, start_index=0) -> pd.DataFrame:
                 time.sleep(1)  # Adjust based on your rate limit
 
             except openai.error.APIConnectionError:
-                retries += 1
-                backoff_time = 2 * retries  # Exponential backoff
-                print(f'APIConnectionError at index {index}. Retrying in {backoff_time} seconds...')
-                time.sleep(backoff_time)
+                print(traceback.format_exc())
+                print(f'Error in index: {index}. Skipping to next entry.')
+                return df
 
             except ValueError:
                 print('ValueError, check if the final index is correct. Final index:', index)
                 return df
                 
             except Exception as e:
-                print(traceback.format_exc())
-                print(f'Error in index: {index}. Skipping to next entry.')
-                break  # exit the while loop and continue with the next row
+                retries += 1
+                backoff_time = 2 * retries  # Exponential backoff
+                print(f'APIConnectionError at index {index}. Retrying in {backoff_time} seconds...')
+                time.sleep(backoff_time)
+
         
         if retries >= MAX_RETRIES:
             print(f"Maximum retries reached for index {index}. Skipping to next entry.")
