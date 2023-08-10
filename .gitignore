@@ -5,3 +5,5 @@ documentation/credentials.json
 __pycache__
 __pycache__/
 __pycache__/*
+lib/__pycache__/
+lib/__pycache__/*
