@@ -33,15 +33,31 @@ PINECONE_INDEX_IDEA = os.environ.get('PINECONE_INDEX_IDEA')
 path_to_drive = os.environ.get('path_to_drive')
 
 ######################## AUXILIARY DICTIONARIES #########################################
+#Create dictionary from DIM_IDEAS table
+
 conn = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
 query = "Select id, idea_db_id from innk_dw_dev.public.dim_idea"
 result = execute_sql(query, conn)
 idea_dic = pd.DataFrame(result, columns=['id', 'idea_db_id']).set_index('idea_db_id')['id'].to_dict()
 
-#########################################################################################
+##########################AUXILIARY FUNCTIONS########################################
 
-#Create dictionary from DIM_IDEAS table
+def average_valid_vectors(row:pd.Series, columns:list):
+    """This function takes a row and a list of columns and returns the average of the non-null vectors in the row.
 
+    Args:
+        row (row): _description_
+        columns (list): embedded columns
+
+    Returns:
+        np.vector: average of the non-null vectors in the row
+    """
+    valid_vectors = [vec for vec in [row[col] for col in columns] if not pd.isna(vec).all()]
+    
+    if not valid_vectors:  # Check if list is empty
+        return np.nan
+    else:
+        return np.mean(valid_vectors, axis=0)
 
 
 
@@ -57,6 +73,31 @@ df_stage = df_dim[['idea_dw_id', 'name_embedded','prob_1_embedded', 'sol_1_embed
 
 #make avarefe of vector in order to leave just one.
 
-df_stage = df_stage.loc[~df_stage.loc[:,'sol_1_embedded'].isnull()]
-df2['combined_emb'] = df2.apply(lambda x: np.mean([x['name_embedded'], x['sol_1_embedded']], axis=0), axis=1)
-combined_emb = np.array(df2['combined_emb'].to_list())
+embedded_columns = ['name_embedded', 'prob_1_embedded', 'sol_1_embedded', 'prob_2_embedded', 'sol_2_embedded', 
+                    'prob_3_embedded', 'sol_3_embedded', 'prob_4_embedded', 'sol_4_embedded', 'prob_5_embedded', 
+                    'sol_5_embedded', 'prob_6_embedded', 'sol_6_embedded']
+
+df_stage['combined_emb'] = df_stage.apply(lambda row: average_valid_vectors(row, embedded_columns), axis=1)
+
+
+#barch insert
+import random
+import itertools
+
+def chunks(iterable, batch_size=100):
+    """A helper function to break an iterable into chunks of size batch_size."""
+    it = iter(iterable)
+    chunk = tuple(itertools.islice(it, batch_size))
+    while chunk:
+        yield chunk
+        chunk = tuple(itertools.islice(it, batch_size))
+
+vector_dim = 128
+vector_count = 10000
+
+# Example generator that generates many (id, vector) pairs
+example_data_generator = map(lambda i: (f'id-{i}', [random.random() for _ in range(vector_dim)]), range(vector_count))
+
+# Upsert data with 100 vectors per upsert request
+for ids_vectors_chunk in chunks(example_data_generator, batch_size=100):
+    index.upsert(vectors=ids_vectors_chunk)  # Assuming `index` defined elsewhere
