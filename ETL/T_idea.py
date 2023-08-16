@@ -70,7 +70,7 @@ conn2 = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
 query2 = "Select id, company_db_id from innk_dw_dev.public.dim_company"
 result2 = execute_sql(query2, conn2)
 
-comp_dic = pd.DataFrame(result2, columns=['d', 'company_db_id']).set_index('d')['company_db_id'].to_dict()   
+comp_dic = pd.DataFrame(result2, columns=['id', 'company_db_id']).set_index('company_db_id')['id'].to_dict()   
 
 #Create dictionary from DIM_USERS table
 conn3 = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
@@ -84,6 +84,13 @@ conn4 = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
 query4 = "Select id, idea_db_id from innk_dw_dev.public.dim_idea"
 result4 = execute_sql(query4, conn4)
 idea_dic = pd.DataFrame(result4, columns=['id', 'idea_db_id']).set_index('idea_db_id')['id'].to_dict()
+
+#Create dictionary from DIM_GOAL table
+conn5 = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
+query5 = "Select id, goal_db_id from innk_dw_dev.public.dim_goal"
+result5 = execute_sql(query5, conn5)
+goal_dic = pd.DataFrame(result5, columns=['id', 'goal_db_id']).set_index('goal_db_id')['id'].to_dict()
+
 
 #################################AUXILIARY FUNCTIONS############################################
 '''
@@ -147,8 +154,8 @@ def process_data(df: pd.DataFrame, start_index=0) -> pd.DataFrame:
                 
             except Exception as e:
                 retries += 1
-                backoff_time = 2 * retries  # Exponential backoff
-                print(f'APIConnectionError at index {index}. Retrying in {backoff_time} seconds...')
+                backoff_time = 2 * retries  # geometrical backoff
+                print(f'Error at index {index}. Retrying in {backoff_time} seconds...')
                 time.sleep(backoff_time)
 
         
@@ -218,7 +225,7 @@ def main():
     df_stg = pd.merge(df_stg, df_ideas_tags, how='left', on='idea_id')
     df_stg.rename(columns={'id':'idea_db_id'}, inplace=True)
 
-    stg_columns = ['idea_db_id', 'company_id_x', 'user_id', 'tag_name', 'tag_description', 'tag_type', 'is_private', 
+    stg_columns = ['idea_db_id', 'company_id_x', 'user_id', 'goal_id', 'tag_name', 'tag_description', 'tag_type', 'is_private', 
                     'stage', 'like_ideas_count', 'average_general', 'idea_title', 'description_field', 
                     'category_y','created_at', 'updated_at', 'submited_at','ada_embedded']
     df_stg = df_stg[stg_columns]
@@ -228,7 +235,7 @@ def main():
         df_stg[category] = df_stg.loc[df_stg['category_y'] == category, 'description_field']
         df_stg[str(category)+'_embedded'] = df_stg.loc[df_stg['category_y'] == category, 'ada_embedded']
 
-    final_columns =['idea_db_id', 'company_id', 'user_id', 'tag_name', 'tag_description', 'tag_type', 'is_private', 
+    final_columns =['idea_db_id', 'company_id', 'user_id','goal_id', 'tag_name', 'tag_description', 'tag_type', 'is_private', 
                     'stage', 'like_ideas_count', 'average_general', 'name', 'description', 
                     'category','created_at', 'updated_at', 'submited_at','name_embedded', 'solution_1', 'solution_2',
                     'solution_3', 'solution_4', 'solution_5', 'solution_6', 'problem_1', 'problem_2', 'problem_3', 'problem_4',
@@ -264,12 +271,12 @@ def main():
                     'sol_6_embedded']
     df_final_dim_idea[emb_cols] = df_final_dim_idea[emb_cols].astype(str)
     
-    df_final_fact_sub_idea = df_final[['idea_db_id', 'company_id', 'submited_at']]
-    df_final_fact_sub_idea.replace({pd.NaT: None}, inplace=True)
+    df_final_fact_sub_idea = df_final[['idea_db_id', 'company_id', 'goal_id', 'submited_at']]
+    df_final_fact_sub_idea.replace({pd.NaT: None, 'None':None}, inplace=True)
     df_final_fact_sub_idea.loc[:,'company_id'] = df_final_fact_sub_idea.loc[:,'company_id'].apply(lambda x: categorize(x, comp_dic))
     #df_final_fact_sub_idea.loc[:,'idea_id'] = df_final_fact_sub_idea.loc[:,'idea_db_id'].apply(lambda x: categorize(x, idea_dic))
     df_final_fact_sub_idea[['company_id']] = df_final_fact_sub_idea[['company_id']].replace('None', None)
-
+    df_final_fact_sub_idea['goal_id'] = df_final_fact_sub_idea['goal_id'].apply(lambda x: categorize(x, goal_dic))
     df_final_dim_idea.to_parquet(path_to_drive + r'stage/dim_idea.parquet', index=False)
     df_final_fact_sub_idea.to_parquet(path_to_drive + r'raw/fact_sub_idea.parquet', index=False)
     

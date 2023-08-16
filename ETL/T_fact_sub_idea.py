@@ -104,14 +104,14 @@ def main():
     df_final_fact_sub_idea = pd.merge(df_fact_sub_idea, df_final, left_on='idea_db_id', right_on='idea_id', how='left')
     df_final_fact_sub_idea['idea_id'] = df_final_fact_sub_idea['idea_db_id'].apply(lambda x: categorize(x, idea_dic))
     df_final_fact_sub_idea = df_final_fact_sub_idea[['idea_id', 'company_id', 'user_id_1', 'user_id_2', 'user_id_3',
-                                                    'user_id_4', 'users', 'submited_at']]
+                                                    'user_id_4', 'users', 'goal_id', 'submited_at']]
     
     #df_final_fact_sub_idea['submited_at'] = df_final_fact_sub_idea['submited_at'].dt.tz_localize(None)
-    user_cols =['company_id', 'user_id_1', 'user_id_2', 'user_id_3', 'user_id_4']
+    user_cols =['company_id', 'user_id_1', 'user_id_2', 'user_id_3', 'user_id_4', 'goal_id']
     df_final_fact_sub_idea[user_cols] = df_final_fact_sub_idea[user_cols].replace(np.nan, 0)
     df_final_fact_sub_idea[user_cols] = df_final_fact_sub_idea[user_cols].replace('None', 0)
-    df_final_fact_sub_idea[['company_id', 'user_id_1', 'user_id_2', 'user_id_3', 'user_id_4']] = df_final_fact_sub_idea[['company_id',
-                                                                                            'user_id_1', 'user_id_2', 'user_id_3', 'user_id_4']].astype(int)
+    df_final_fact_sub_idea[['company_id', 'user_id_1', 'user_id_2', 'user_id_3', 'user_id_4', 'goal_id']] = df_final_fact_sub_idea[['company_id',
+                                                                                            'user_id_1', 'user_id_2', 'user_id_3', 'user_id_4', 'goal_id']].astype(int)
     df_final_fact_sub_idea['submited_at'] = df_fact_sub_idea['submited_at'].replace({None: '1900-01-01 00:00:00'})
     df_final_fact_sub_idea.to_parquet(path_to_drive + 'stage/fact_sub_idea.parquet', index=False)
     

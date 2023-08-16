@@ -1,22 +1,22 @@
 # Load libraries
 import os
 import sys
+import traceback
+import time
 import pandas as pd
 import numpy as np
 from datetime import datetime
 from dotenv import load_dotenv
+import openai
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-
 os.chdir(path)
 sys.path.insert(0, path)
-from lib.general_module import get_conn
+from lib.general_module import get_conn, categorize, execute_sql
 
 today = datetime.today()#.strftime("%d-%m-%Y")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
 
-
-##### Dependencies: E_ideas_form_field_answers.py > T_ideas.py > T_fact_sub_idea.py ###############
-
+############################# Dependencies: T_goal.py  ###############
 
 
 ###############################ENVIRONMENT VARIABLES#####################################
@@ -35,9 +35,10 @@ path_to_drive = os.environ.get('path_to_drive')
 def insert_data(df, conn):
     """Insert data into ideas table in database"""
 
-    insert = """INSERT INTO innk_dw_dev.public.fact_submitted_idea (idea_id, company_id, user_id_1, \
-    user_id_2, user_id_3, user_id_4, users, goal_id, submitted_at) \
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    insert = """INSERT INTO innk_dw_dev.public.dim_goal (goal_db_id, company_id, goal_name, \
+    goal_description, active, ideas_reception, is_private, end_campaign, created_at,
+    updated_at, valid_from, valid_to, is_current) \
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s ,%s, %s, %s)
     """
     data = list(df.itertuples(index=False, name=None))
     with conn.cursor() as cur:
@@ -48,13 +49,12 @@ def insert_data(df, conn):
     conn.close()
     return None
 
-
 def main(path):
     
-    fact_sub_idea = pd.read_parquet(path)
-    print(fact_sub_idea.tail())
+    dim_goal = pd.read_parquet(path)
+    print(dim_goal.tail())
     conn = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
-    insert_data(fact_sub_idea, conn)
+    insert_data(dim_goal, conn)
     return None
 
 if __name__=='__main__':
