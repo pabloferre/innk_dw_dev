@@ -128,3 +128,43 @@ def execute_sql(query:str, conn):
         cur.execute(query)
         result = cur.fetchall()
     return result
+
+def average_valid_vectors(row:pd.Series, columns:list):
+    """This function takes a row and a list of columns and returns the average of the non-null vectors in the row.
+
+    Args:
+        row (row): _description_
+        columns (list): embedded columns
+
+    Returns:
+        np.vector: average of the non-null vectors in the row
+    """
+    valid_vectors = [vec for vec in [row[col] for col in columns] if not pd.isna(vec)]
+    print(valid_vectors)
+    if not valid_vectors:  # Check if list is empty
+        return np.nan
+    else:
+        return np.mean(valid_vectors, axis=0)
+    
+    
+def average_valid_vectors(row: pd.Series, columns: list):
+    """This function takes a row and a list of columns and returns the average of the non-null vectors in the row.
+
+    Args:
+        row (pd.Series): Row from a DataFrame
+        columns (list): Embedded columns
+
+    Returns:
+        np.array: Average of the non-null vectors in the row
+    """
+    # Collect all vectors, ignoring full NaN vectors
+    vectors = [np.array(row[col]) for col in columns if not pd.isna(row[col]).all()]
+
+    if not vectors:  # Check if list is empty
+        return np.nan
+
+    # Stack vectors vertically and compute mean while ignoring NaNs
+    stacked_vectors = np.vstack(vectors)
+    mean_vector = np.nanmean(stacked_vectors, axis=0)
+
+    return mean_vector

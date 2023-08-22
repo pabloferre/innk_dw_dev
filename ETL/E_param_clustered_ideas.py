@@ -7,8 +7,6 @@ import time
 from openai.error import APIError
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
-from lib.general_module import get_conn, get_embeddings, ensure_columns, categorize, execute_sql
-from lib.openai_module import classify_field
 
 load_dotenv()
 path_to_drive = os.environ.get('path_to_drive')
@@ -26,8 +24,8 @@ def create_message(df:pd.DataFrame)->str:
     base_message = """I have the following cluster of ideas with it name and description. \
     return only a python dictionary. The dictionary should be as the \
     following json:  { 'cluster_name': 'you_asnwer for the cluster name in no more than 4 words', \
-    'cluster_description': 'you_asnwer for the cluster name in no more than 4 words', '1': {'name': \
-    'your answer for the idea number 1 name', 'description': 'you answer for idea number 1 description'} } \
+    'cluster_description': 'you_asnwer for the cluster's description in no more than 20 words', '1': {'name': \
+    'your answer for the idea number 1 name in no more than 4 words', 'description': 'you answer for idea number 1 description i no more than 25 words'} } \
     This is the cluster: \n"""
         
     cluster_text = ''
@@ -36,7 +34,7 @@ def create_message(df:pd.DataFrame)->str:
     'Ideas para mejorar la oferta turística y comercial en las estaciones', '214': {'name': 'Módulos comerciales en plazoleta', \
     'description': 'Implementar módulos para guías turísticos en la plazoleta de la estación San Javier.'} } \
     This would be an error: {'cluster_name': 'Oferta turística', 'cluster_description': 'musica', 'ideas': {'214': 'name': 'Nombre', \
-        'description': 'Descripcion'}. Rembember, ONLY return the dictionary"
+        'description': 'Descripcion'}. Rembember, ONLY return the dictionary, and keep the idea number given as the key for each idea. "
     
     for i, row in df.iterrows():
         text = '[Idea number ' + str(i) + ': Name: ' + str(df.loc[i,'name']) + '| Description: ' + str(df.loc[i,'description']) + "]\n"
@@ -114,28 +112,26 @@ df.rename(columns={'solution_1':'description', 'combined_labels':'cluster'}, inp
 df.sort_values('cluster', inplace=True)
 df = df.reset_index(drop=True)
 
+def main():
 
-df_ = pd.DataFrame()
-n = 0
-parsed_clusters = [i for i in range(29)]
-for i in df['cluster'].unique():
-    if i in parsed_clusters:
-        continue
-    print(n, i)
-    if n == 30:
-        break
-    
-    chunks = list(chunk_dataframe(df.loc[df.loc[:,'cluster']==i]))
+    df_ = pd.DataFrame()
 
-    # Classify each chunk
+    for i in df['cluster'].unique():
+        
+        chunks = list(chunk_dataframe(df.loc[df.loc[:,'cluster']==i]))
 
-    answers = classify_clusters_from_chunks(chunks)
+        # Classify each chunk
+
+        answers = classify_clusters_from_chunks(chunks)
 
 
-    # Fill dataframe with answers
-    df_stg = fill_cluster(df.loc[df.loc[:,'cluster']==i], answers)
-    
+        # Fill dataframe with answers
+        df_stg = fill_cluster(df.loc[df.loc[:,'cluster']==i], answers)
+        
 
-    df_ = pd.concat([df_,df_stg])
-    n += 1
-    time.sleep(1)
+        df_ = pd.concat([df_,df_stg])
+        n += 1
+        time.sleep(1)
+
+if __name__ == '__main__':
+    main()  

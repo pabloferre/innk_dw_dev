@@ -93,34 +93,7 @@ goal_dic = pd.DataFrame(result5, columns=['id', 'goal_db_id']).set_index('goal_d
 
 
 #################################AUXILIARY FUNCTIONS############################################
-'''
-def process_data(df:pd.DataFrame, start_index=0)->pd.DataFrame:
-    """Function that processes the data frame and returns a new data frame with the embeddings"""
-    length = len(df)
-    for i, row in df.iterrows():
-        index = i + start_index
-        print(index)
-        if (index-1)  >= length:
-                return df
-        try:
-            embedding = get_embeddings(row['field_answer'])
-            # Save the embedding in a new column
-            df.at[index, 'ada_embedded'] = np.array(embedding).tolist()
-            # Sleep to respect API rate limits
-            time.sleep(1)  # Adjust based on your rate limit
-        except openai.error.APIConnectionError:
-            print(index)
-            return df
-        except ValueError:
-            #IF THE VALUE ERROR IS RAISED, CHECK IF THE FINAL INDEX IS CORRECT WITH THE NUMBER OF ROWS
-            print('ValueError, check if the final index is correct. Final index: ', index)
-            return df
-        except Exception as e:
-            print(traceback.format_exc())
-            print('Error in index:', index, 'Resuming in 2 seconds...')
-            time.sleep(2)
-            df = process_data(df, index)
-    return df'''
+
 
 def process_data(df: pd.DataFrame, start_index=0) -> pd.DataFrame:
     """Function that processes the data frame and returns a new data frame with the embeddings"""
@@ -213,6 +186,15 @@ def main():
     df_emb.rename(columns={'field_answer':'description_field'}, inplace=True)
     df_emb.to_parquet(path_to_drive + r'temp_ideas_embedded.parquet') #Temp file to save the embeddeds
 
+
+
+
+    df_emb = pd.read_parquet(path_to_drive + r'temp_ideas_embedded.parquet') #Read temp file BORRAR
+    
+
+
+
+    
     #Get main idea table and tag_table to merge it with the embeddeds
 
     df_idea = pd.read_json(path_to_drive + r'raw/ideas_table.json')
@@ -269,14 +251,13 @@ def main():
                     'sol_3_embedded','prob_4_embedded', 'sol_4_embedded', 
                     'prob_5_embedded', 'sol_5_embedded','prob_6_embedded', 
                     'sol_6_embedded']
-    df_final_dim_idea[emb_cols] = df_final_dim_idea[emb_cols].astype(str)
+    
     
     df_final_fact_sub_idea = df_final[['idea_db_id', 'company_id', 'goal_id', 'submited_at']]
     df_final_fact_sub_idea.replace({pd.NaT: None, 'None':None}, inplace=True)
     df_final_fact_sub_idea.loc[:,'company_id'] = df_final_fact_sub_idea.loc[:,'company_id'].apply(lambda x: categorize(x, comp_dic))
-    #df_final_fact_sub_idea.loc[:,'idea_id'] = df_final_fact_sub_idea.loc[:,'idea_db_id'].apply(lambda x: categorize(x, idea_dic))
     df_final_fact_sub_idea[['company_id']] = df_final_fact_sub_idea[['company_id']].replace('None', None)
-    df_final_fact_sub_idea['goal_id'] = df_final_fact_sub_idea['goal_id'].apply(lambda x: categorize(x, goal_dic))
+    df_final_fact_sub_idea['goal_id'] = df_final_fact_sub_idea['goal_id'].apply(lambda x: categorize(x, goal_dic)).replace('None', None)
     df_final_dim_idea.to_parquet(path_to_drive + r'stage/dim_idea.parquet', index=False)
     df_final_fact_sub_idea.to_parquet(path_to_drive + r'raw/fact_sub_idea.parquet', index=False)
     
