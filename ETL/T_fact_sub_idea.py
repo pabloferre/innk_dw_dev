@@ -55,8 +55,8 @@ idea_dic = pd.DataFrame(result1, columns=['id', 'idea_db_id']).set_index('idea_d
 
 
 def main():
-    df_collaborations = pd.read_json(path_to_drive + 'raw/collaborations.json')
-    df_fact_sub_idea = pd.read_parquet(path_to_drive + 'raw/fact_sub_idea.parquet')
+    df_collaborations = pd.read_json(path_to_drive + r'raw/collaborations.json')
+    df_fact_sub_idea = pd.read_parquet(path_to_drive + r'raw/fact_sub_idea.parquet')
 
     # sort the data frame if necessary, this is to ensure the order of user_id's for each idea_id
     df_collaborations.sort_values(by=['idea_id'], inplace=True)

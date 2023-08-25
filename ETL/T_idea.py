@@ -11,7 +11,7 @@ import openai
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 sys.path.insert(0, path)
-from lib.general_module import get_conn, get_embeddings, ensure_columns, categorize, execute_sql
+from lib.general_module import get_conn, get_embeddings, ensure_columns, categorize, execute_sql, serialize_vector
 
 today = datetime.today()#.strftime("%d-%m-%Y")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
@@ -185,15 +185,6 @@ def main():
     df_emb = process_data(df_emb)
     df_emb.rename(columns={'field_answer':'description_field'}, inplace=True)
     df_emb.to_parquet(path_to_drive + r'temp_ideas_embedded.parquet') #Temp file to save the embeddeds
-
-
-
-
-    df_emb = pd.read_parquet(path_to_drive + r'temp_ideas_embedded.parquet') #Read temp file BORRAR
-    
-
-
-
     
     #Get main idea table and tag_table to merge it with the embeddeds
 
@@ -252,7 +243,10 @@ def main():
                     'prob_5_embedded', 'sol_5_embedded','prob_6_embedded', 
                     'sol_6_embedded']
     
-    
+
+    for col in emb_cols:
+        df_final_dim_idea[col] = df_final_dim_idea[col].apply(serialize_vector)
+        
     df_final_fact_sub_idea = df_final[['idea_db_id', 'company_id', 'goal_id', 'submited_at']]
     df_final_fact_sub_idea.replace({pd.NaT: None, 'None':None}, inplace=True)
     df_final_fact_sub_idea.loc[:,'company_id'] = df_final_fact_sub_idea.loc[:,'company_id'].apply(lambda x: categorize(x, comp_dic))

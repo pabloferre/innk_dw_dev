@@ -94,3 +94,12 @@ select users.id, users.company_id, users.email, users.first_name, users.last_nam
 users.contract_profile, users.area_id, ca."name" as "area", users.created_at, users.updated_at
 from users
 right join company_areas ca on ca.id = users.area_id 
+
+
+--para eliminar duplicados
+
+with duplicates as (
+	SELECT id, ROW_NUMBER() OVER (PARTITION BY idea_db_id  ORDER BY idea_db_id) as dup 
+	FROM public.dim_idea)
+delete from public.dim_idea 
+where id in (select id from duplicates where dup > 1);

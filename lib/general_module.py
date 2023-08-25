@@ -114,7 +114,7 @@ def categorize(cell:str, class_dict:dict)->str:
     
     return category
 
-def execute_sql(query:str, conn):
+def execute_sql(query:str, conn:redshift_connector):
     """Execute sql query in database
 
     Args:
@@ -129,42 +129,84 @@ def execute_sql(query:str, conn):
         result = cur.fetchall()
     return result
 
-def average_valid_vectors(row:pd.Series, columns:list):
-    """This function takes a row and a list of columns and returns the average of the non-null vectors in the row.
-
-    Args:
-        row (row): _description_
-        columns (list): embedded columns
-
-    Returns:
-        np.vector: average of the non-null vectors in the row
-    """
-    valid_vectors = [vec for vec in [row[col] for col in columns] if not pd.isna(vec)]
-    print(valid_vectors)
-    if not valid_vectors:  # Check if list is empty
-        return np.nan
-    else:
-        return np.mean(valid_vectors, axis=0)
     
     
 def average_valid_vectors(row: pd.Series, columns: list):
-    """This function takes a row and a list of columns and returns the average of the non-null vectors in the row.
+    vectors = []
+    expected_length = 1536
+    for col in columns:
+        if row[col] is not None and type(row[col]) != float:
+            arr = np.array(row[col])
+            
+            if len(arr) != expected_length:
+                continue
+            vectors.append(arr)
 
-    Args:
-        row (pd.Series): Row from a DataFrame
-        columns (list): Embedded columns
-
-    Returns:
-        np.array: Average of the non-null vectors in the row
-    """
-    # Collect all vectors, ignoring full NaN vectors
-    vectors = [np.array(row[col]) for col in columns if not pd.isna(row[col]).all()]
-
-    if not vectors:  # Check if list is empty
+    if not vectors:
         return np.nan
 
-    # Stack vectors vertically and compute mean while ignoring NaNs
     stacked_vectors = np.vstack(vectors)
     mean_vector = np.nanmean(stacked_vectors, axis=0)
 
     return mean_vector
+
+
+def serialize_vector(vector:np.array)->str:
+    """Serialize a vector to a string
+
+    Args:
+        vector (np.array): embedded vector
+
+    Returns:
+        str: string representation of a embedded vector
+    """
+    if isinstance(vector, (float, int)) and pd.isna(vector):  # Check if scalar and NaN
+        return None
+    elif isinstance(vector, np.ndarray) and np.isnan(vector).all():  # Check if all values in the numpy array are NaN
+        return None
+    return ','.join(map(str, vector))
+
+
+def deserialize_vector(vector_str:str)->np.ndarray:
+    """Deserialize a vector from a string   
+
+    Args:
+        vector_str (str): string representation of a embedded vector
+
+    Returns:
+        np.ndarray: embeded vector
+    """
+    if vector_str == None:
+        return np.nan
+    return np.fromstring(vector_str, sep=',')
+
+
+def insert_batch(df:pd.DataFrame, conn:redshift_connector, insert:str, batch_size=100):
+    """Insert a small batch of rows from the DataFrame into the ideas table"""
+    # Take a subset of your DataFrame
+    subset_df = df.head(batch_size)
+    data = list(subset_df.itertuples(index=False, name=None))
+    
+    total_rows = len(df)
+    num_batches = (total_rows // batch_size) + (1 if total_rows % batch_size else 0)
+    MAX_RETRIES = 10
+    with conn.cursor() as cur:
+        for i in range(num_batches):
+            retries = 0
+            success = False
+            start_idx = i * batch_size
+            end_idx = start_idx + batch_size
+            batch_data = df.iloc[start_idx:end_idx]
+            data = list(batch_data.itertuples(index=False, name=None))
+            while retries < MAX_RETRIES and not success:
+                try:
+                    cur.executemany(insert, data)
+                    conn.commit()
+                    print(f"Inserted batch {i + 1} of {num_batches}")
+                    success = True
+                except Exception as e:
+                    print("Error on batch number", i+1)
+                    print("Error:", e)
+                    retries += 1
+
+    conn.close()
