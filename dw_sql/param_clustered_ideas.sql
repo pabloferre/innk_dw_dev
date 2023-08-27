@@ -12,4 +12,5 @@ CREATE TABLE IF NOT EXISTS innk_dw_dev.public.param_clustered_ideas (
     cluster_name VARCHAR(24000),
     cluster_description VARCHAR(24000),
     cluster_number INT
+    distance_centroid FLOAT,
 )
