@@ -137,7 +137,6 @@ def average_valid_vectors(row: pd.Series, columns: list):
     for col in columns:
         if row[col] is not None and type(row[col]) != float:
             arr = np.array(row[col])
-            
             if len(arr) != expected_length:
                 continue
             vectors.append(arr)
@@ -149,6 +148,7 @@ def average_valid_vectors(row: pd.Series, columns: list):
     mean_vector = np.nanmean(stacked_vectors, axis=0)
 
     return mean_vector
+
 
 
 def serialize_vector(vector:np.array)->str:

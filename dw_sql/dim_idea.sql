@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS innk_dw_dev.public.dim_idea (
     sol_5_embedded VARCHAR(65000),
     prob_6_embedded VARCHAR(65000),
     sol_6_embedded VARCHAR(65000),
+    combined_embedded VARCHAR(65000),
     created_at TIMESTAMP WITHOUT TIME ZONE   ENCODE az64,
 	updated_at TIMESTAMP WITHOUT TIME ZONE   ENCODE az64,
     valid_from TIMESTAMP WITHOUT TIME ZONE   ENCODE az64,

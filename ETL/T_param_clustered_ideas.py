@@ -48,7 +48,7 @@ df = df.merge(df_ideas[['id', 'goal_id', 'company_id']], how='left', left_on='id
 df['goal_id'] = df['goal_id'].apply(lambda x: categorize(x, goal_dic))
 df['company_id'] = df['company_id'].apply(lambda x: categorize(x, comp_dic))
 df['idea_id'] = df['idea_db_id'].apply(lambda x: categorize(x, idea_dic))
-df.rename(columns={'name':'idea_c_name', 'description':'idea_c_description', 'cluster':'cluster_number'}, inplace=True)
+df.rename(columns={'idea_name':'idea_c_name', 'idea_description':'idea_c_description', 'cluster':'cluster_number'}, inplace=True)
 df = df[['idea_id', 'idea_db_id', 'company_id', 'goal_id','idea_c_name', 'idea_c_description', 'cluster_name', 
          'cluster_description', 'cluster_number']]
 df.to_parquet(path_to_drive + r'stage/param_clustered_ideas_117.parquet', index=False)
