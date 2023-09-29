@@ -111,11 +111,10 @@ def get_ai_idea_classification(df:pd.DataFrame, clust_dict)->pd.DataFrame:
     cluster_instance = chain.run(ideas=input_variables['ideas'], cluster_name=input_variables['cluster_name'], cluster_description=input_variables['cluster_description'])
     c_name = cluster_instance.cluster_name
     c_description = cluster_instance.cluster_description
+    
     if clust_dict['flag']:
-        cluster_name = clust_dict['cluster_name']
-        cluster_description = clust_dict['cluster_description'] 
-        clu_name = [cluster_name, cluster_instance.cluster_name]
-        clu_description = [cluster_description, cluster_instance.cluster_description]
+        clu_name = [clust_dict['cluster_name'], cluster_instance.cluster_name]
+        clu_description = [clust_dict['cluster_description'] , cluster_instance.cluster_description]
         human_message_prompt = HumanMessagePromptTemplate.from_template(template=template_prev_chunk)
         chat_prompt2 = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
         chain2 = create_tagging_chain_pydantic(Cluster_, llm, chat_prompt2, verbose=True)
