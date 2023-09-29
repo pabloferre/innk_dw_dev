@@ -2,7 +2,7 @@ import openai
 from dotenv import load_dotenv
 import os
 import pandas as pd
-import ast
+import numpy as np
 import time
 from openai.error import APIError
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -19,10 +19,8 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains import create_tagging_chain, create_tagging_chain_pydantic, create_extraction_chain_pydantic
 from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain.prompts.example_selector.base import BaseExampleSelector
-from langchain.memory import ConversationSummaryMemory, ChatMessageHistory
 from pydantic import BaseModel, Field
-from typing import Dict, Optional,List, Sequence
-
+from typing import Dict, List, Sequence
 
 
 
@@ -50,14 +48,18 @@ class Idea(BaseModel):
 class Cluster(BaseModel):
     cluster_name: str = Field(description='Name of the cluster in no more than 5 words')
     cluster_description: str = Field(description='Description of the cluster in no more than 25 words')
-    #idea: Sequence[Idea]
+    idea: Sequence[Idea]
+    
+class Cluster_(BaseModel):
+    cluster_name: str = Field(description='Name of the cluster in no more than 5 words')
+    cluster_description: str = Field(description='Description of the cluster in no more than 25 words')
 
 
 
 #################################################PROMPT TEMPLATE##############################################
 system_template = "You are a proficient assistant, experienced in categorizing and summarizing diverse ideas. You are tasked to succinctly summarize and classify the provided set of ideas. Please present your answer in a well-structured JSON format."
  
-template = """For each idea in the following list, please provide a refreshed idea name (up to 5 words), and a concise summary (from 10 words and up to 35 words). Also, return a collective cluster name (up to 8 words) and description (form 10 words and up to 30 words).
+template = """For each idea in the following list, please provide a refreshed idea name (up to 8 words), and a concise summary (from 10 words and up to 35 words). Also, return a collective cluster name (up to 8 words) and description (form 10 words and up to 30 words).
 \n
 List of Ideas: 
 \n
@@ -65,18 +67,13 @@ List of Ideas:
 \n
 Note: Ensure the new idea names and summaries are delivered in Spanish. One response is required for each idea listed."""
 
-template_prev_chunk = """You have two jobs:
+template_prev_chunk = """Provide a cluster name (max 8 words) and  cluster description (max 25 words). Consider combining the cluster names and descriptions from chunks of ideas from the list given below.
 \n
-First: Provide a cluster name (max 8 words) and description (max 25 words). Consider combining the previous chunk cluster name '{cluster_name}' and description '{cluster_description}' when naming this cluster and the cluster description for continuity.
+List of cluster names: {clu_name}
 \n
-
-Second: For each idea in the following list, use the given number, name, and description to craft a new idea name (max 8 words) and a summary (min of 10 words and max 30 words) for each item. 
-List of Ideas:
+List of cluster descriptions: {clu_description}
 \n
-{ideas}
-\n
-\n
- Remember, all new idea names, summaries, and cluster details must be in Spanish. Each idea should have a distinct new name and summary. Ensure no repetition of original names and descriptions. Provide one unique response for each idea listed."""
+"""
 
 example = "{'cluster_name': 'Oferta turística y comercial', 'cluster_description': \
     'Ideas para mejorar la oferta turística y comercial en las estaciones', 'id':'0', 'idea_name': 'Módulos comerciales en plazoleta', \
@@ -98,11 +95,6 @@ system_message_prompt = SystemMessagePromptTemplate.from_template(template=syste
 ###########################AUXILIARY FUNCTIONS#################################################
 
 def get_ai_idea_classification(df:pd.DataFrame, clust_dict)->pd.DataFrame:
-    if clust_dict['flag']:
-        human_message_prompt = HumanMessagePromptTemplate.from_template(template=template_prev_chunk, example_selector=example_selector)
-    else:
-        human_message_prompt = HumanMessagePromptTemplate.from_template(template=template)
-        
     cluster_name = clust_dict['cluster_name']
     cluster_description = clust_dict['cluster_description'] 
     cluster_text = df[['name', 'description']].to_dict(orient='records')
@@ -113,22 +105,29 @@ def get_ai_idea_classification(df:pd.DataFrame, clust_dict)->pd.DataFrame:
         di['idea_description'] = clean_text(di.pop('description'))
         i += 1
     input_variables = {'ideas':cluster_text, 'cluster_name':cluster_name, 'cluster_description':cluster_description}
+    human_message_prompt = HumanMessagePromptTemplate.from_template(template=template)
     chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
     chain = create_tagging_chain_pydantic(Cluster, llm, chat_prompt, verbose=True)
     cluster_instance = chain.run(ideas=input_variables['ideas'], cluster_name=input_variables['cluster_name'], cluster_description=input_variables['cluster_description'])
-    flattened = [{"cluster_name": cluster_instance.cluster_name, "cluster_description": cluster_instance.cluster_description, **idea.dict()
+    c_name = cluster_instance.cluster_name
+    c_description = cluster_instance.cluster_description
+    if clust_dict['flag']:
+        cluster_name = clust_dict['cluster_name']
+        cluster_description = clust_dict['cluster_description'] 
+        clu_name = [cluster_name, cluster_instance.cluster_name]
+        clu_description = [cluster_description, cluster_instance.cluster_description]
+        human_message_prompt = HumanMessagePromptTemplate.from_template(template=template_prev_chunk)
+        chat_prompt2 = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
+        chain2 = create_tagging_chain_pydantic(Cluster_, llm, chat_prompt2, verbose=True)
+        cluster_instance2 = chain2.run(clu_name=clu_name, clu_description=clu_description)
+        c_name = cluster_instance2.cluster_name
+        c_description = cluster_instance2.cluster_description
+        
+    flattened = [{"cluster_name": c_name, "cluster_description": c_description, **idea.dict()
     } for idea in cluster_instance.idea]
 
     # Create a DataFrame with one row for each idea
     return pd.DataFrame(flattened).rename(columns={'Idea_number':'id', 'Idea_name':'idea_name', 'Idea_description':'idea_description'})
-
-
-
-def classify_cluster(df:pd.DataFrame)->dict:
-    message = create_message(df)
-    print(message)
-    return message
-
 
 
 def fill_cluster(df:pd.DataFrame, answer:pd.DataFrame)->pd.DataFrame:
@@ -184,10 +183,16 @@ def clean_text(text):
     return cleaned_text
 
 
+######################################################### LOAD DATA#################################################3
+
 df =  pd.read_excel(path_to_drive + r'cluster_117.xlsx')#dataframe with idea name, idea_id, goal_id, name and embedded column with a mean of all the embedded columns of the idea
 df.rename(columns={'solution_1':'description', 'combined_labels':'cluster'}, inplace=True)
 df.sort_values('cluster', inplace=True)
 df = df.reset_index(drop=True)
+
+
+
+######################################################### MAIN #################################################
 
 def main():
 
