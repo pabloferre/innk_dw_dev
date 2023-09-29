@@ -50,14 +50,14 @@ class Idea(BaseModel):
 class Cluster(BaseModel):
     cluster_name: str = Field(description='Name of the cluster in no more than 5 words')
     cluster_description: str = Field(description='Description of the cluster in no more than 25 words')
-    idea: Sequence[Idea]
+    #idea: Sequence[Idea]
 
 
 
 #################################################PROMPT TEMPLATE##############################################
 system_template = "You are a proficient assistant, experienced in categorizing and summarizing diverse ideas. You are tasked to succinctly summarize and classify the provided set of ideas. Please present your answer in a well-structured JSON format."
  
-template = """For each idea in the following list, please provide a refreshed idea name (up to 5 words), and a concise summary (up to 25 words). Also, return a collective cluster name (up to 5 words) and description (up to 25 words).
+template = """For each idea in the following list, please provide a refreshed idea name (up to 5 words), and a concise summary (from 10 words and up to 35 words). Also, return a collective cluster name (up to 8 words) and description (form 10 words and up to 30 words).
 \n
 List of Ideas: 
 \n
@@ -65,11 +65,16 @@ List of Ideas:
 \n
 Note: Ensure the new idea names and summaries are delivered in Spanish. One response is required for each idea listed."""
 
-template_prev_chunk = """For each idea in the following list, use the given number, name, and description to craft a new idea name (max 5 words) and a summary (max 25 words) for each item. Additionally, provide a cluster name (max 5 words) and description (max 25 words). Consider combining the previous chunk cluster name '{cluster_name}' and description '{cluster_description}' when naming this cluster and the cluster description for continuity
+template_prev_chunk = """You have two jobs:
 \n
+First: Provide a cluster name (max 8 words) and description (max 25 words). Consider combining the previous chunk cluster name '{cluster_name}' and description '{cluster_description}' when naming this cluster and the cluster description for continuity.
+\n
+
+Second: For each idea in the following list, use the given number, name, and description to craft a new idea name (max 8 words) and a summary (min of 10 words and max 30 words) for each item. 
 List of Ideas:
 \n
 {ideas}
+\n
 \n
  Remember, all new idea names, summaries, and cluster details must be in Spanish. Each idea should have a distinct new name and summary. Ensure no repetition of original names and descriptions. Provide one unique response for each idea listed."""
 
@@ -92,9 +97,9 @@ system_message_prompt = SystemMessagePromptTemplate.from_template(template=syste
 
 ###########################AUXILIARY FUNCTIONS#################################################
 
-def get_ai_idea_classification(df:pd.DataFrame, clust_dict, chat_prompt)->pd.DataFrame:
+def get_ai_idea_classification(df:pd.DataFrame, clust_dict)->pd.DataFrame:
     if clust_dict['flag']:
-        human_message_prompt = HumanMessagePromptTemplate.from_template(template=template_prev_chunk)
+        human_message_prompt = HumanMessagePromptTemplate.from_template(template=template_prev_chunk, example_selector=example_selector)
     else:
         human_message_prompt = HumanMessagePromptTemplate.from_template(template=template)
         
@@ -187,7 +192,7 @@ df = df.reset_index(drop=True)
 def main():
 
     df_ = pd.DataFrame()
-
+    n = 0
     for i in df['cluster'].unique():
         
         chunks = list(chunk_dataframe(df.loc[df.loc[:,'cluster']==i]))
@@ -205,8 +210,10 @@ def main():
         
 
         df_ = pd.concat([df_,df_stg])
-        break
+        if n==5:
+            break
         time.sleep(1)
+        n+=1
 
 if __name__ == '__main__':
     main()  
