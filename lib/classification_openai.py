@@ -7,8 +7,7 @@ from openai.error import APIError
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 print(path)
-from lib.general_module import get_conn, get_embeddings, ensure_columns, categorize, execute_sql
-from lib.openai_module import classify_field
+from lib.utils_openai import classify_field
 
 load_dotenv()
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY_INNK') 
