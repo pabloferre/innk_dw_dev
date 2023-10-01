@@ -65,7 +65,7 @@ List of Ideas:
 \n
 {ideas}
 \n
-Note: Ensure the new idea names and summaries are delivered in Spanish. One response is required for each idea listed."""
+Note: Ensure the new idea names and summaries are delivered in Spanish. One response is required for each idea listed. Don't copy the idea name and idea description in the response."""
 
 template_prev_chunk = """Provide a cluster name (max 8 words) and  cluster description (max 25 words). Consider combining the cluster names and descriptions from chunks of ideas from the list given below.
 \n
@@ -103,15 +103,21 @@ def get_ai_idea_classification(df:pd.DataFrame, clust_dict)->pd.DataFrame:
         di['idea_number'] = str(i)
         di['idea_name'] = di.pop('name')
         di['idea_description'] = clean_text(di.pop('description'))
+        print(len(di['idea_description']))
         i += 1
     input_variables = {'ideas':cluster_text, 'cluster_name':cluster_name, 'cluster_description':cluster_description}
+    llm = ChatOpenAI(temperature=0,
+                    model='gpt-3.5-turbo',
+                    openai_api_key=OPENAI_API_KEY
+)
+    system_message_prompt = SystemMessagePromptTemplate.from_template(template=system_template)
     human_message_prompt = HumanMessagePromptTemplate.from_template(template=template)
     chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
     chain = create_tagging_chain_pydantic(Cluster, llm, chat_prompt, verbose=True)
     cluster_instance = chain.run(ideas=input_variables['ideas'], cluster_name=input_variables['cluster_name'], cluster_description=input_variables['cluster_description'])
     c_name = cluster_instance.cluster_name
     c_description = cluster_instance.cluster_description
-    
+    time.sleep(2)
     if clust_dict['flag']:
         clu_name = [clust_dict['cluster_name'], cluster_instance.cluster_name]
         clu_description = [clust_dict['cluster_description'] , cluster_instance.cluster_description]
@@ -121,7 +127,7 @@ def get_ai_idea_classification(df:pd.DataFrame, clust_dict)->pd.DataFrame:
         cluster_instance2 = chain2.run(clu_name=clu_name, clu_description=clu_description)
         c_name = cluster_instance2.cluster_name
         c_description = cluster_instance2.cluster_description
-        
+    time.sleep(2)
     flattened = [{"cluster_name": c_name, "cluster_description": c_description, **idea.dict()
     } for idea in cluster_instance.idea]
 
@@ -146,7 +152,7 @@ def fill_cluster(df:pd.DataFrame, answer:pd.DataFrame)->pd.DataFrame:
         df.loc[i, 'cluster_description'] = answer.loc[i, 'cluster_description']
         df.loc[i, 'idea_name'] = answer.loc[i,'idea_name']
         df.loc[i, 'idea_description'] = answer.loc[i,'idea_description']
-    return df
+    return df.reset_index(drop=True)
 
 
 def chunk_dataframe(df, max_rows=5): 
@@ -170,7 +176,7 @@ def classify_clusters_from_chunks(chunks:pd.DataFrame):
         clust_dict['cluster_description'] = answer.loc[0, 'cluster_description']
         clust_dict['flag'] = True
         
-    return all_answers
+    return all_answers.reset_index(drop=True)
 
 def clean_text(text):
     # Remove extra lines and strip spaces from each line
@@ -216,7 +222,7 @@ def main():
         df_ = pd.concat([df_,df_stg])
         if n==5:
             break
-        time.sleep(1)
+        time.sleep(4)
         n+=1
 
 if __name__ == '__main__':
