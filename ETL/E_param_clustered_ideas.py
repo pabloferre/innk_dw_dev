@@ -42,17 +42,17 @@ class CustomExampleSelector(BaseExampleSelector):
 class Idea(BaseModel):
     #id: int = Field(description='Given Idea Number for the idea')
     idea_name: str = Field(description='Name of the idea in no more than 5 words')
-    idea_description: str = Field(description='Description of the idea in no more than 25 words')
+    idea_description: str = Field(description='Summarized description of the idea in no more than 25 words')
     
 
 class Cluster(BaseModel):
     cluster_name: str = Field(description='Name of the cluster in no more than 5 words')
-    cluster_description: str = Field(description='Description of the cluster in no more than 25 words')
+    cluster_description: str = Field(description='Summarized description of the cluster in no more than 25 words')
     idea: Sequence[Idea]
     
 class Cluster_(BaseModel):
     cluster_name: str = Field(description='Name of the cluster in no more than 5 words')
-    cluster_description: str = Field(description='Description of the cluster in no more than 25 words')
+    cluster_description: str = Field(description='Summarized escription of the cluster in no more than 25 words')
 
 
 
@@ -65,7 +65,7 @@ List of Ideas:
 \n
 {ideas}
 \n
-Note: Ensure the new idea names and summaries are delivered in Spanish. One response is required for each idea listed. Don't copy the idea name and idea description in the response."""
+Note: Ensure the new idea names and summaries are delivered in Spanish. One response is required for each idea listed. Don't copy the given idea name and idea description in the response."""
 
 template_prev_chunk = """Provide a cluster name (max 8 words) and  cluster description (max 25 words). Consider combining the cluster names and descriptions from chunks of ideas from the list given below.
 \n
