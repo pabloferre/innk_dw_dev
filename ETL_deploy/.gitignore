@@ -5,3 +5,4 @@ airflow-worker.pid
 .\logs\
 ./logs/
 logs/
+.\logs\*
