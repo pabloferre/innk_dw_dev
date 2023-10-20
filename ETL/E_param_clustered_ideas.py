@@ -19,6 +19,8 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains import create_tagging_chain, create_tagging_chain_pydantic, create_extraction_chain_pydantic
 from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain.prompts.example_selector.base import BaseExampleSelector
+from langchain.callbacks import get_openai_callback
+from langchain.llms import OpenAI
 from pydantic import BaseModel, Field
 from typing import Dict, List, Sequence
 
@@ -42,48 +44,55 @@ class CustomExampleSelector(BaseExampleSelector):
 class Idea(BaseModel):
     #id: int = Field(description='Given Idea Number for the idea')
     idea_name: str = Field(description='Name of the idea in no more than 5 words')
-    idea_description: str = Field(description='Summarized description of the idea in no more than 25 words')
+    idea_description: str = Field(description='New summarized description of the idea in no more than 35 words')
     
 
 class Cluster(BaseModel):
     cluster_name: str = Field(description='Name of the cluster in no more than 5 words')
-    cluster_description: str = Field(description='Summarized description of the cluster in no more than 25 words')
+    cluster_description: str = Field(description='Summarized description of the cluster in no more than 35 words')
     idea: Sequence[Idea]
     
 class Cluster_(BaseModel):
     cluster_name: str = Field(description='Name of the cluster in no more than 5 words')
-    cluster_description: str = Field(description='Summarized escription of the cluster in no more than 25 words')
+    cluster_description: str = Field(description='Summarized escription of the cluster in no more than 35 words')
 
 
 
 #################################################PROMPT TEMPLATE##############################################
-system_template = "You are a proficient assistant, experienced in categorizing and summarizing diverse ideas. You are tasked to succinctly summarize and classify the provided set of ideas. Please present your answer in a well-structured JSON format."
+system_template = "You are a proficient assistant, experienced in categorizing and summarizing diverse ideas.\
+    You are tasked to succinctly summarize and classify the provided set of ideas. Please present your answer in \
+        a well-structured JSON format."
  
-template = """For each idea in the following list, please provide a refreshed idea name (up to 8 words), and a concise summary (from 10 words and up to 35 words). Also, return a collective cluster name (up to 8 words) and description (form 10 words and up to 30 words).
+template = """For each idea in the following list, please provide a refreshed idea name (up to 8 words), and an idea \
+    description with a concise summary (from 10 words and up to 35 words). Also, return a collective cluster name (up to 8 words) and \
+        description (form 10 words and up to 30 words).
 \n
 List of Ideas: 
 \n
 {ideas}
 \n
-Note: Ensure the new idea names and summaries are delivered in Spanish. One response is required for each idea listed. Don't copy the given idea name and idea description in the response."""
+Note: Ensure the new idea names and summaries are delivered in Spanish. One response is required for each idea \
+    listed. Don't copy the given idea name and idea description in the response."""
 
-template_prev_chunk = """Provide a cluster name (max 8 words) and  cluster description (max 25 words). Consider combining the cluster names and descriptions from chunks of ideas from the list given below.
+template_prev_chunk = """Provide a cluster name (max 8 words) and  cluster description (max 25 words). Consider \
+    combining the cluster names and descriptions from chunks of ideas from the list given below.
 \n
 List of cluster names: {clu_name}
 \n
 List of cluster descriptions: {clu_description}
 \n
-"""
+Note: Ensure the new cluster names and summaries are delivered in Spanish."""
+
+
 
 example = "{'cluster_name': 'Oferta turística y comercial', 'cluster_description': \
     'Ideas para mejorar la oferta turística y comercial en las estaciones', 'id':'0', 'idea_name': 'Módulos comerciales en plazoleta', \
     'idea_description': 'Implementar módulos para guías turísticos en la plazoleta de la estación San Javier.', 'id':'1', 'idea_name': 'Módulos comerciales', \
     'idea_description': 'Implementar módulos para aviones.'}"
 
-"""Please note, all new idea names and summaries must be in Spanish. Don't forget to please provide a refreshed idea name (up to 5 words), and a concise summary (up to 25 words) for each idea in the list. Never repeat the idea name and idea description in the. One response is required for each idea listed."""
 
 llm = ChatOpenAI(temperature=0,
-                 model='gpt-3.5-turbo',
+                 model='gpt-3.5-turbo-16k',
                  openai_api_key=OPENAI_API_KEY
 )
 example_selector = CustomExampleSelector(example)
@@ -102,32 +111,37 @@ def get_ai_idea_classification(df:pd.DataFrame, clust_dict)->pd.DataFrame:
     for di in cluster_text:
         di['idea_number'] = str(i)
         di['idea_name'] = di.pop('name')
-        di['idea_description'] = clean_text(di.pop('description'))
-        print(len(di['idea_description']))
+        di['idea_description'] = final_text(di.pop('description'))
         i += 1
     input_variables = {'ideas':cluster_text, 'cluster_name':cluster_name, 'cluster_description':cluster_description}
     llm = ChatOpenAI(temperature=0,
-                    model='gpt-3.5-turbo',
-                    openai_api_key=OPENAI_API_KEY
+                    model='gpt-3.5-turbo-16k',
+                    openai_api_key=OPENAI_API_KEY,
+                    max_tokens=4000
 )
     system_message_prompt = SystemMessagePromptTemplate.from_template(template=system_template)
     human_message_prompt = HumanMessagePromptTemplate.from_template(template=template)
     chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
     chain = create_tagging_chain_pydantic(Cluster, llm, chat_prompt, verbose=True)
-    cluster_instance = chain.run(ideas=input_variables['ideas'], cluster_name=input_variables['cluster_name'], cluster_description=input_variables['cluster_description'])
+    with get_openai_callback() as cb:
+        cluster_instance = chain.run(ideas=input_variables['ideas'], cluster_name=input_variables['cluster_name'], cluster_description=input_variables['cluster_description'])
+        #print(cb)
+    
+    
     c_name = cluster_instance.cluster_name
     c_description = cluster_instance.cluster_description
-    time.sleep(2)
     if clust_dict['flag']:
         clu_name = [clust_dict['cluster_name'], cluster_instance.cluster_name]
         clu_description = [clust_dict['cluster_description'] , cluster_instance.cluster_description]
         human_message_prompt = HumanMessagePromptTemplate.from_template(template=template_prev_chunk)
         chat_prompt2 = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
         chain2 = create_tagging_chain_pydantic(Cluster_, llm, chat_prompt2, verbose=True)
-        cluster_instance2 = chain2.run(clu_name=clu_name, clu_description=clu_description)
+        
+        with get_openai_callback() as cb:
+            cluster_instance2 = chain2.run(clu_name=clu_name, clu_description=clu_description)
+            print(cb)
         c_name = cluster_instance2.cluster_name
         c_description = cluster_instance2.cluster_description
-    time.sleep(2)
     flattened = [{"cluster_name": c_name, "cluster_description": c_description, **idea.dict()
     } for idea in cluster_instance.idea]
 
@@ -178,13 +192,16 @@ def classify_clusters_from_chunks(chunks:pd.DataFrame):
         
     return all_answers.reset_index(drop=True)
 
-def clean_text(text):
+def final_text(text):
     # Remove extra lines and strip spaces from each line
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     # Join the cleaned lines
     cleaned_text = ' '.join(lines)
     # Remove extra spaces
     cleaned_text = ' '.join(cleaned_text.split())
+    # Remove text len greater than 500
+    if len(cleaned_text) > 500:
+        cleaned_text = cleaned_text[:500]
     return cleaned_text
 
 
@@ -220,7 +237,7 @@ def main():
         
 
         df_ = pd.concat([df_,df_stg])
-        if n==5:
+        if n==7:
             break
         time.sleep(4)
         n+=1

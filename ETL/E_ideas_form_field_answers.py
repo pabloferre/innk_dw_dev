@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 sys.path.insert(0, path)
-from lib.general_module import get_conn
+from lib.utils import get_conn
 
 
 
@@ -19,7 +19,7 @@ load_dotenv()
 ##################################ENVIRONMENT VARIABLES###############################
 aws_host = os.environ.get('aws_host')
 aws_db = os.environ.get('aws_db')
-aws_db_dw = os.environ.get('aws_db')
+aws_db_dw = os.environ.get('aws_db_dw')
 aws_port = int(os.environ.get('aws_port'))
 aws_user_db = os.environ.get('aws_user_db')
 aws_pass_db = os.environ.get('aws_pass_db')

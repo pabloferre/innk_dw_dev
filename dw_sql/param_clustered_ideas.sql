@@ -6,11 +6,11 @@ CREATE TABLE IF NOT EXISTS innk_dw_dev.public.param_clustered_ideas (
     company_id INT,
     CONSTRAINT fk_id_company FOREIGN KEY (company_id) REFERENCES dim_company(id),
     goal_id INT,
-    CONSTRAINT fk_id_goal FOREIGN KEY (goal_id) REFERENCES dim_goal(id),
+    CONSTRAINT fk_id_goal FOREIGN KEY (goal_id) REFERENCES dim_goals(id),
     idea_c_name VARCHAR(24000),
     idea_c_description VARCHAR(24000),
     cluster_name VARCHAR(24000),
     cluster_description VARCHAR(24000),
     cluster_number INT
-    distance_centroid FLOAT,
+    distance_centroid FLOAT
 )

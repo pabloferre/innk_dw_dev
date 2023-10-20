@@ -5,6 +5,5 @@ CREATE TABLE IF NOT EXISTS innk_dw_dev.public.dim_embedded_idea (
     idea_db_id INT NOT NULL,
     problem_embedded VARCHAR(24000),
     solution_embedded VARCHAR(24000),
-    created_at TIMESTAMP WITHOUT TIME ZONE   ENCODE az64,
-)
+    created_at TIMESTAMP WITHOUT TIME ZONE   ENCODE az64
 )

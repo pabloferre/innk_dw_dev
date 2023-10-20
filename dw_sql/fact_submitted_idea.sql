@@ -14,6 +14,6 @@ CREATE TABLE IF NOT EXISTS innk_dw_dev.public.fact_submitted_idea (
     CONSTRAINT fk_id_users_4 FOREIGN KEY (user_id_4) REFERENCES dim_users(id),
     users VARCHAR(24000),
     goal_id INT,
-    CONSTRAINT fk_id_goal FOREIGN KEY (goal_id) REFERENCES dim_goal(id),
+    CONSTRAINT fk_id_goal FOREIGN KEY (goal_id) REFERENCES dim_goals(id),
     submitted_at TIMESTAMP WITHOUT TIME ZONE   ENCODE az64
 )

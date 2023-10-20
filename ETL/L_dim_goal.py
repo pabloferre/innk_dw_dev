@@ -1,17 +1,14 @@
 # Load libraries
 import os
 import sys
-import traceback
-import time
 import pandas as pd
 import numpy as np
 from datetime import datetime
 from dotenv import load_dotenv
-import openai
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 sys.path.insert(0, path)
-from lib.general_module import get_conn, categorize, execute_sql
+from lib.utils import get_conn
 
 today = datetime.today()#.strftime("%d-%m-%Y")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
@@ -48,6 +45,9 @@ def insert_data(df, conn):
         conn.commit()
     conn.close()
     return None
+
+################################# MAIN FUNCTION ########################################
+
 
 def main(path):
     
