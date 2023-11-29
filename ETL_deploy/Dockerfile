@@ -1,5 +1,5 @@
 # Use an official Python 3.11 image as a base
-FROM python:3.11-slim-bullseye
+FROM python:3.11-slim-buster
 
 # Set environment variables
 ENV AIRFLOW_HOME=/usr/local/airflow
@@ -28,12 +28,13 @@ RUN apt-get update && apt-get install -y dumb-init && apt-get clean && rm -rf /v
 
 
 COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 RUN echo "airflow:x:50000:50000:airflow:/usr/local/airflow:/bin/bash" >> /etc/passwd
 RUN echo -e "AIRFLOW_UID=$(id -u)\nAIRFLOW_GID=0" > .env
 RUN chown -R airflow:airflow /usr/local/airflow/
 
-USER airflow
+
 
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir -r /requirements.txt 
@@ -48,7 +49,9 @@ COPY --chown=airflow ./plugins ${AIRFLOW_HOME}/plugins
 COPY --chown=airflow ./logs ${AIRFLOW_HOME}/logs
 COPY --chown=airflow ./airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 COPY --chown=airflow ./logs /opt/airflow/logs/
-ENTRYPOINT ["docker-entrypoint"]
+
+USER airflow
+ENTRYPOINT ["/entrypoint.sh"]
 
 # Expose the default webserver and worker ports
 EXPOSE 8080

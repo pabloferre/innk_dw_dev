@@ -1,8 +1,0 @@
-/.env
-.env
-airflow-webserver.pid
-airflow-worker.pid
-.\logs\
-./logs/
-logs/
-.\logs\*

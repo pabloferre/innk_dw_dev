@@ -21,6 +21,7 @@ aws_user_db = os.environ.get('aws_user_db')
 aws_pass_db = os.environ.get('aws_pass_db')
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY_INNK')
 OPENAI_ORG_ID = os.environ.get('OPENAI_ORG_ID_INNK')
+OPENAI_MODEL = os.environ.get('OPENAI_MODEL')
 
 openai.api_key = OPENAI_API_KEY
 openai.organization = OPENAI_ORG_ID
@@ -48,7 +49,6 @@ def get_conn(aws_host, aws_db, aws_port, aws_user_db, aws_pass_db):
         password=aws_pass_db
     )
     return conn
-
 
 def connect_db(aws_host, aws_db, aws_port, aws_user_db, aws_pass_db):
     """Crea conexión con base de datos. Datos sobre la db a la que se conecta (dev,
@@ -85,7 +85,6 @@ def get_embeddings(text:str)->list:
         print(f"Error occurred while getting embedding for text: {text}\n{str(e)}")
         raise e
     return embedding
-
 
 def ensure_columns(df:pd.DataFrame, columns:list)->pd.DataFrame:
     """Ensure that dataframe has all columns in list"""
@@ -127,9 +126,8 @@ def execute_sql(query:str, conn:redshift_connector):
     with conn.cursor() as cur:
         cur.execute(query)
         result = cur.fetchall()
+    conn.close()
     return result
-
-    
     
 def average_valid_vectors(row: pd.Series, columns: list):
     vectors = []
@@ -149,8 +147,6 @@ def average_valid_vectors(row: pd.Series, columns: list):
 
     return mean_vector
 
-
-
 def serialize_vector(vector:np.array)->str:
     """Serialize a vector to a string
 
@@ -164,8 +160,9 @@ def serialize_vector(vector:np.array)->str:
         return None
     elif isinstance(vector, np.ndarray) and np.isnan(vector).all():  # Check if all values in the numpy array are NaN
         return None
+    elif vector is None:
+        return None
     return ','.join(map(str, vector))
-
 
 def deserialize_vector(vector_str:str)->np.ndarray:
     """Deserialize a vector from a string   
@@ -179,7 +176,6 @@ def deserialize_vector(vector_str:str)->np.ndarray:
     if vector_str == None:
         return np.nan
     return np.fromstring(vector_str, sep=',')
-
 
 def insert_batch(df:pd.DataFrame, conn:redshift_connector, insert:str, batch_size=100):
     """Insert a small batch of rows from the DataFrame into the ideas table"""
@@ -208,5 +204,20 @@ def insert_batch(df:pd.DataFrame, conn:redshift_connector, insert:str, batch_siz
                     print("Error on batch number", i+1)
                     print("Error:", e)
                     retries += 1
+                    if retries == MAX_RETRIES:
+                        raise e
 
     conn.close()
+        
+def check_existing_records_ideas(df, conn):
+    """Check if records in the DataFrame already exist in the database"""
+    existing_ids = set()
+
+    # Fetch existing idea_db_ids from the database
+    with conn.cursor() as cur:
+        cur.execute("SELECT idea_db_id FROM public.dim_idea")
+        existing_ids.update(row[0] for row in cur.fetchall())
+
+    # Filter out existing records from the DataFrame
+    new_records = df[~df['idea_db_id'].isin(existing_ids)]
+    return new_records

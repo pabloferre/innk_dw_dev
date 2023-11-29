@@ -1,11 +1,10 @@
 {
-	"folders": [
-		{
-			"path": ".."
-		},
-		{
-			"path": "H:/Mi unidad/Innk"
-		}
-	],
-	"settings": {}
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "../../Desktop/test"
+        }
+    ]
 }

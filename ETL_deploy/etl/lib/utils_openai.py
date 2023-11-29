@@ -10,12 +10,12 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 OPENAI_ORG_ID = os.environ.get('OPENAI_ORG_ID')
 openai.api_key = OPENAI_API_KEY
 openai.organization = OPENAI_ORG_ID
-
+open_ai_model = os.environ.get('OPENAI_MODEL')
 
 
 def classify_field(title:str, description:str):
     """ Function to classify a field into one of the following categories: 
-    Problem, Solution or Idea name, Other. Usinf OpenAI's API.
+    Problem, Solution or Idea name, Other. Using OpenAI's API.
 
     Args:
         title (str): field name
@@ -25,7 +25,7 @@ def classify_field(title:str, description:str):
         response: final classification
     """
     
-    message = f"I have a form field with the title: '{title}' \
+    message = f"""I have a form field with the title: '{title}' \
             and the description: '{description}'. Classify the title into the categories: Problem, Solution, \
                 Idea name, Other. Using the title and its description. \
                 \n\
@@ -35,22 +35,22 @@ def classify_field(title:str, description:str):
                 Description = '¿Cuál es la oportunidad o el problema sobre el que surge tu idea? \
                     / In this section you should describe the specific problem you want to solve or \
                         opportunity you want to take advantage of.'\
-                Category = 'Problem'\
+                Your answer for category: 'Problem'\
                 Example 2:\
                 Title = '¿Qué es lo que busca tu idea?'\
                 Description = 'Selecciona que acción apunta a lograr tu idea.'\
-                Category = 'Solution'\
+                Your answer for category: 'Solution'\
                 Example 3:\
                 Title: 'Tu propuesta de nombre'\
                 Description: 'Resume en un par de palabras la acción que busca generar tu idea.\
                     Un buen titulo no debería tener más de 5 palabras.'\
-                Category: 'Idea name'\
+                Your answer for category: 'Idea name'\
                 Example 4:\
                 Title: '¿Cuál es el tiempo estimado para desarrollarla?'\
                 Description: 'Si no sabes exactamente puedes poner referencias o escribir \
                     Sin Información. Recuerda que mientras más antecedentes tengamos, podremos evaluar\
                         tu idea de mejor manera.'\
-                Category: 'Other'\
+                Your answer for category: 'Other'\
                 \n\
                 Here are some examples of incorrect classification:\
                 Example 1:\
@@ -58,23 +58,24 @@ def classify_field(title:str, description:str):
                 Description = 'En esta sección debes describir cuál es tu propuesta para el problema u oportunidad detectados.\
                     Sintetiza como funcionaria la solución que propones y en qué se diferencia de otras formas de abordar el \
                         problema.'\
-                Category = 'Problem'\
+                Your answer for category: 'Problem'\
                 Example 2:\
                 Title = '¿Qué es lo que busca tu idea?'\
                 Description = 'Selecciona que acción apunta a lograr tu idea.'\
-                Category =  'Solution'\
+                Your answer for category:  'Solution'\
                 Example 3:\
                 Title = 'La necesidad'\
                 Description = '¿A qué problema, necesidad, falla o quiebre del mercado se enfoca su proyecto?'\
-                Category = 'Idea name'\
+                Your answer for category: 'Idea name'\
                 Example 4:\
                 Title = 'Contexto'\
                 Description = 'Cuéntanos detalles sobre la necesidad, oportunidad o situación'\
-                Category = 'Other'\
+                Your answer for category: 'Category: Other'\
                 \n\
-                Give only the category as an answer."
+                The only acceptable answers for Category are: 'Problem', 'Solution', 'Idea name' or 'Other'.
+                REMEMBER: your answer must be only the category given in the examples, not the whole sentence."""
     response = openai.ChatCompletion.create(
-            model ="gpt-3.5-turbo",
+            model =open_ai_model,
             messages = [{"role": "system", 
                           "content": "You are a helpful assistant, that makes correct classifications."}, 
                          {"role": "user", "content": message}],

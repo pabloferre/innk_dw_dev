@@ -4,16 +4,16 @@ x-airflow-common:
   # In order to add custom dependencies or upgrade provider packages you can use your extended image.
   # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
   # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
-  #image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.7.2} 
-  #image: apache/airflow:2.7.2-python3.11
+  #image: innk
   build: .
+  image: "innk_dw/deploy:v${VERSION}"
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/airflow
     # For backward compatibility, with Airflow <2.3
-    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/airflow
     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
     AIRFLOW__CORE__FERNET_KEY: 'mNyKhq7ErnV1PCicw4jYgW3KnbJ4awKb9hn2-U_gFKw='
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
@@ -77,6 +77,7 @@ services:
 
   airflow-webserver:
     <<: *airflow-common
+    image: "innk_dw/webserver:v${VERSION}"
     command: webserver
     expose:
       - 9090
@@ -98,6 +99,7 @@ services:
 
   airflow-scheduler:
     <<: *airflow-common
+    image: "innk_dw/scheduler:v${VERSION}"
     command: scheduler
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
@@ -115,7 +117,8 @@ services:
 
   airflow-worker:
     <<: *airflow-common
-    command: celery worker
+    image: "innk_dw/worker:v${VERSION}"
+    command: airflow celery worker
     healthcheck:
       # yamllint disable rule:line-length
       test:
@@ -140,6 +143,7 @@ services:
 
   airflow-triggerer:
     <<: *airflow-common
+    image: "innk_dw/triggerer:v${VERSION}"
     command: triggerer
     healthcheck:
       test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
@@ -166,20 +170,18 @@ services:
         chown -R "${AIRFLOW_UID}:0" /sources/{logs,dags,plugins}
         airflow db migrate
         airflow users create \
-        -u ${AIRFLOW_USER_USERNAME:-default_username} \
-        -p ${AIRFLOW_USER_PASSWORD:-default_password} \
-        -f ${AIRFLOW_USER_FIRSTNAME:-default_firstname} \
-        -l ${AIRFLOW_USER_LASTNAME:-default_lastname} \
-        -r ${AIRFLOW_USER_ROLE:-Admin} \
-        -e ${AIRFLOW_USER_EMAIL:-admin@example.com}
+        -u ${AIRFLOW_USER_USERNAME:-$AIRFLOW_USER_USERNAME} \
+        -p ${AIRFLOW_USER_PASSWORD:-$AIRFLOW_USER_PASSWORD} \
+        -f ${AIRFLOW_USER_FIRSTNAME:-$AIRFLOW_USER_FIRSTNAME} \
+        -l ${AIRFLOW_USER_LASTNAME:-$AIRFLOW_USER_LASTNAME} \
+        -r ${AIRFLOW_USER_ROLE:-$AIRFLOW_USER_ROLE} \
+        -e ${AIRFLOW_USER_EMAIL:-$AIRFLOW_USER_EMAIL}
 
 
     # yamllint enable rule:line-length
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_MIGRATE: 'true'
-      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
-      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
       _PIP_ADDITIONAL_REQUIREMENTS: ''
     user: "0:0"
     env_file:
