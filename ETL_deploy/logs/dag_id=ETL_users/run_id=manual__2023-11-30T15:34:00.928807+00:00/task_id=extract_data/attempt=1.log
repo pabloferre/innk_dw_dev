@@ -1,0 +1,13 @@
+[2023-11-30T15:35:27.746+0000] {taskinstance.py:1159} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: ETL_users.extract_data manual__2023-11-30T15:34:00.928807+00:00 [queued]>
+[2023-11-30T15:35:27.952+0000] {taskinstance.py:1159} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: ETL_users.extract_data manual__2023-11-30T15:34:00.928807+00:00 [queued]>
+[2023-11-30T15:35:27.952+0000] {taskinstance.py:1361} INFO - Starting attempt 1 of 6
+[2023-11-30T15:35:28.265+0000] {taskinstance.py:1382} INFO - Executing <Task(BashOperator): extract_data> on 2023-11-30 15:34:00.928807+00:00
+[2023-11-30T15:35:28.369+0000] {standard_task_runner.py:57} INFO - Started process 235 to run task
+[2023-11-30T15:35:28.536+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'ETL_users', 'extract_data', 'manual__2023-11-30T15:34:00.928807+00:00', '--job-id', '19', '--raw', '--subdir', 'DAGS_FOLDER/ETL_users.py', '--cfg-path', '/tmp/tmplaq2brgf']
+[2023-11-30T15:35:28.549+0000] {standard_task_runner.py:85} INFO - Job 19: Subtask extract_data
+[2023-11-30T15:35:29.545+0000] {task_command.py:416} INFO - Running <TaskInstance: ETL_users.extract_data manual__2023-11-30T15:34:00.928807+00:00 [running]> on host 6abfe3f7fc58
+[2023-11-30T15:37:17.641+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 19 for task extract_data ((psycopg2.OperationalError) could not translate host name "postgres" to address: Temporary failure in name resolution
+
+(Background on this error at: https://sqlalche.me/e/14/e3q8); 235)
+[2023-11-30T15:42:09.260+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2023-11-30T15:42:10.249+0000] {taskinstance.py:2778} INFO - 0 downstream tasks scheduled from follow-on schedule check

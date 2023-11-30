@@ -1,0 +1,10 @@
+[2023-11-30T15:42:14.055+0000] {taskinstance.py:1159} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: ETL_users.extract_data scheduled__2023-10-26T00:00:00+00:00 [queued]>
+[2023-11-30T15:42:14.081+0000] {taskinstance.py:1159} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: ETL_users.extract_data scheduled__2023-10-26T00:00:00+00:00 [queued]>
+[2023-11-30T15:42:14.082+0000] {taskinstance.py:1361} INFO - Starting attempt 1 of 6
+[2023-11-30T15:42:14.290+0000] {taskinstance.py:1382} INFO - Executing <Task(BashOperator): extract_data> on 2023-10-26 00:00:00+00:00
+[2023-11-30T15:42:14.569+0000] {standard_task_runner.py:57} INFO - Started process 261 to run task
+[2023-11-30T15:42:14.659+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'ETL_users', 'extract_data', 'scheduled__2023-10-26T00:00:00+00:00', '--job-id', '28', '--raw', '--subdir', 'DAGS_FOLDER/ETL_users.py', '--cfg-path', '/tmp/tmpe24ikmlv']
+[2023-11-30T15:49:55.992+0000] {standard_task_runner.py:85} INFO - Job 28: Subtask extract_data
+[2023-11-30T15:50:22.376+0000] {cli_action_loggers.py:135} WARNING - Failed to log action (psycopg2.OperationalError) could not translate host name "postgres" to address: Temporary failure in name resolution
+
+(Background on this error at: https://sqlalche.me/e/14/e3q8)

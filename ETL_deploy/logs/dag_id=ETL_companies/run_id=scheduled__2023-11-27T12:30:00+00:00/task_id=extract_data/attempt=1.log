@@ -1,0 +1,18 @@
+[2023-11-30T15:32:42.519+0000] {taskinstance.py:1159} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: ETL_companies.extract_data scheduled__2023-11-27T12:30:00+00:00 [queued]>
+[2023-11-30T15:32:42.556+0000] {taskinstance.py:1159} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: ETL_companies.extract_data scheduled__2023-11-27T12:30:00+00:00 [queued]>
+[2023-11-30T15:32:42.556+0000] {taskinstance.py:1361} INFO - Starting attempt 1 of 6
+[2023-11-30T15:32:42.711+0000] {taskinstance.py:1382} INFO - Executing <Task(BashOperator): extract_data> on 2023-11-27 12:30:00+00:00
+[2023-11-30T15:32:42.756+0000] {standard_task_runner.py:57} INFO - Started process 61 to run task
+[2023-11-30T15:32:42.801+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'ETL_companies', 'extract_data', 'scheduled__2023-11-27T12:30:00+00:00', '--job-id', '3', '--raw', '--subdir', 'DAGS_FOLDER/ETL_companies.py', '--cfg-path', '/tmp/tmpz5c2lj1o']
+[2023-11-30T15:32:42.805+0000] {standard_task_runner.py:85} INFO - Job 3: Subtask extract_data
+[2023-11-30T15:32:42.961+0000] {task_command.py:416} INFO - Running <TaskInstance: ETL_companies.extract_data scheduled__2023-11-27T12:30:00+00:00 [running]> on host 6abfe3f7fc58
+[2023-11-30T15:32:43.293+0000] {taskinstance.py:1662} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='ETL_companies' AIRFLOW_CTX_TASK_ID='extract_data' AIRFLOW_CTX_EXECUTION_DATE='2023-11-27T12:30:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2023-11-27T12:30:00+00:00'
+[2023-11-30T15:32:43.294+0000] {subprocess.py:63} INFO - Tmp dir root location: /tmp
+[2023-11-30T15:32:43.295+0000] {subprocess.py:75} INFO - Running command: ['/bin/bash', '-c', 'python3 /usr/local/***/etl/E_dim_companies.py']
+[2023-11-30T15:32:43.320+0000] {subprocess.py:86} INFO - Output:
+[2023-11-30T15:32:55.757+0000] {subprocess.py:93} INFO - https://innkdw-etl.s3.amazonaws.com/raw/2023-11-30_companies.json
+[2023-11-30T15:32:56.749+0000] {subprocess.py:93} INFO - https://innkdw-etl.s3.amazonaws.com/raw/2023-11-30_companies.json
+[2023-11-30T15:32:56.753+0000] {subprocess.py:97} INFO - Command exited with return code 0
+[2023-11-30T15:32:56.859+0000] {taskinstance.py:1400} INFO - Marking task as SUCCESS. dag_id=ETL_companies, task_id=extract_data, execution_date=20231127T123000, start_date=20231130T153242, end_date=20231130T153256
+[2023-11-30T15:32:56.956+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2023-11-30T15:32:57.036+0000] {taskinstance.py:2778} INFO - 1 downstream tasks scheduled from follow-on schedule check
