@@ -1,8 +1,0 @@
-[2023-11-29T19:00:25.429+0000] {processor.py:157} INFO - Started process (PID=16) to work on /opt/airflow/dags/ETL_clustered_ideas.py
-[2023-11-29T19:00:25.628+0000] {processor.py:829} INFO - Processing file /opt/airflow/dags/ETL_clustered_ideas.py for tasks to queue
-[2023-11-29T19:00:25.860+0000] {logging_mixin.py:151} INFO - [2023-11-29T19:00:25.632+0000] {dagbag.py:536} INFO - Filling up the DagBag from /opt/airflow/dags/ETL_clustered_ideas.py
-[2023-11-29T19:01:59.715+0000] {logging_mixin.py:151} INFO - [2023-11-29T19:01:03.116+0000] {timeout.py:68} ERROR - Process timed out, PID: 16
-[2023-11-29T19:42:54.641+0000] {processor.py:157} INFO - Started process (PID=9) to work on /opt/airflow/dags/ETL_clustered_ideas.py
-[2023-11-29T19:42:54.648+0000] {processor.py:829} INFO - Processing file /opt/airflow/dags/ETL_clustered_ideas.py for tasks to queue
-[2023-11-29T19:42:54.672+0000] {logging_mixin.py:151} INFO - [2023-11-29T19:42:54.667+0000] {dagbag.py:536} INFO - Filling up the DagBag from /opt/airflow/dags/ETL_clustered_ideas.py
-[2023-11-29T19:42:54.780+0000] {processor.py:839} INFO - DAG(s) dict_keys(['ETL_clustered_ideas']) retrieved from /opt/airflow/dags/ETL_clustered_ideas.py
