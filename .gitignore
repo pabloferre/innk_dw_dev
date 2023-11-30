@@ -7,3 +7,4 @@ __pycache__/
 __pycache__/*
 lib/__pycache__/
 innk_dw/lib/__pycache__
+/etl_airflow.ppk
