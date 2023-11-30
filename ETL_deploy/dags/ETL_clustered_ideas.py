@@ -14,6 +14,7 @@ with DAG(
     'ETL_clustered_ideas',
     default_args=default_args,
     description='ETL for param clustered ideas table',
+    catchup = False
     ) as dag:
 
     #Get clusterization

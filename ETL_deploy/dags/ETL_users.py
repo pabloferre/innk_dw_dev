@@ -15,6 +15,7 @@ with DAG(
     'ETL_users',
     default_args=default_args,
     description='ETL for users table',
+    catchup = False
     ) as dag:
 
     #Extract

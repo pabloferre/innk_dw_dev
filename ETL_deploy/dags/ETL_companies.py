@@ -15,6 +15,7 @@ with DAG(
     'ETL_companies',
     default_args=default_args,
     description='ETL for companies table',
+    catchup = False
     ) as dag:
 
     #Extract

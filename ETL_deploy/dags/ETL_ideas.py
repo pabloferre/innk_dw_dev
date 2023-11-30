@@ -14,6 +14,7 @@ with DAG(
     'ETL_ideas',
     default_args=default_args,
     description='ETL for dim_ideas, fact_ideas and param_class_table',
+    catchup = False
     ) as dag:
 
     #Extract

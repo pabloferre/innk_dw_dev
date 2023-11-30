@@ -15,6 +15,7 @@ with DAG(
     'ETL_goals',
     default_args=default_args,
     description='ETL for goals table',
+    catchup = False
     ) as dag:
 
     #Extract
