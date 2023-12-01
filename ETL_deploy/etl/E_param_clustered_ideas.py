@@ -22,7 +22,7 @@ openai.api_key = OPENAI_API_KEY
 openai.organization = OPENAI_ORG_ID
 
 
-today = datetime.today().strftime("%d-%m-%Y")
+today = datetime.today().strftime("%Y-%m-%d")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
 
 ################################Dependecies get_clusters.py ################################################

@@ -14,9 +14,8 @@ os.chdir(path)
 sys.path.insert(0, path)
 from lib.utils_openai import classify_field
 
-today = datetime.today().strftime("%d-%m-%Y")
+today = datetime.today().strftime("%Y-%m-%d")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
-
 
 
 ##### Dependencies:  E_ideas_form_field_answers.py  ###############

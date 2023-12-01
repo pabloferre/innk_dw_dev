@@ -10,7 +10,7 @@ os.chdir(path)
 sys.path.insert(0, path)
 from lib.utils import get_conn
 
-today = datetime.today().strftime("%d-%m-%Y")
+today = datetime.today().strftime("%Y-%m-%d")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
 
 ###############################ENVIRONMENT VARIABLES#####################################

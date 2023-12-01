@@ -19,7 +19,7 @@ aws_port = int(os.environ.get('aws_port'))
 aws_user_db = os.environ.get('aws_user_db')
 aws_pass_db = os.environ.get('aws_pass_db')
 
-today = datetime.today().strftime("%d-%m-%Y")
+today = datetime.today().strftime("%Y-%m-%d")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
 
 ################################Dependecies (ETL dim/fact ideas) > get_clusters.py > E_param_clustered_ideas.py #######################

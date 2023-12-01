@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 sys.path.insert(0, path)
+
 today = datetime.today().strftime("%Y-%m-%d")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
 

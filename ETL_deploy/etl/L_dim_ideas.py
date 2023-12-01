@@ -10,6 +10,7 @@ path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 sys.path.insert(0, path)
 from lib.utils import get_conn, insert_batch, check_existing_records_ideas
+
 today = datetime.today().strftime("%Y-%m-%d")
 now = datetime.now()#.strftime("%d-%m-%Y, %H:%M:%S")
 
