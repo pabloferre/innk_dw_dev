@@ -208,11 +208,15 @@ def main(url):
     if status == 200:
         print(f"Successful S3 get_object response. Status - {status}")
         df = pd.read_json(response.get("Body"))
-        df = df.loc[24300:26200]
 
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
         raise Exception(f"Error loading data from S3 - {status}")
+    
+    if df.empty:
+        print('No new data to load.' + ' ' + 'No new data to load.')
+        sys.stdout.write('No new data to load.' + ' ' + 'No new data to load.')
+        return 'No new data to load.' + ' ' + 'No new data to load.'
     
     #Classify form field answers from database
     df_ = df.loc[df['company_id'].isin(class_dict.keys())]
