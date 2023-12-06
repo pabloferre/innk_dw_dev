@@ -10,6 +10,7 @@ path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 import ast
 import json
+import time
 
 load_dotenv()
 bucket_name = os.environ.get('bucket_name')
@@ -164,15 +165,24 @@ def rename_ideas(df_chunk: pd.DataFrame, flag:dict) -> pd.DataFrame:
         message = create_message_prompt(df_chunk.loc[:, ['index', 'name', 'description']].to_dict(orient='records'), prompt_cluster, flag)
     else:
         message = create_message_prompt(df_chunk.loc[:, ['index', 'name', 'description']].to_dict(orient='records'), prompt, flag)
-        
-    response = openai.ChatCompletion.create(
-        model=OPENAI_MODEL,
-        messages=[
-            {"role": "system", "content": system_template},
-            {"role": "user", "content": message}
-        ],
-        temperature=0,
-    )
+    
+    max_attempts = 0
+    while max_attempts < 5:
+        try:
+            response = openai.ChatCompletion.create(
+                model=OPENAI_MODEL,
+                messages=[
+                    {"role": "system", "content": system_template},
+                    {"role": "user", "content": message}
+                ],
+                temperature=0,
+            )
+            max_attempts = 5
+        except Exception as e:
+            print('PRINT error: ', e)
+            time.sleep(2)
+            max_attempts += 1
+    
     max_retries = 0
     while max_retries < 5:
         json_data = {'ideas': [], 'cluster_name': 'None', 'cluster_description': 'None'}
@@ -181,7 +191,6 @@ def rename_ideas(df_chunk: pd.DataFrame, flag:dict) -> pd.DataFrame:
             max_retries = 5
         except SyntaxError:
             print('PRINT error ', response.choices[0].message['content'])
-            max_retries += 1
             try:
                 json_data = json.loads(str(response.choices[0].message['content']))
                 max_retries = 5
