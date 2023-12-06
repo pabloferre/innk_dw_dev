@@ -6,6 +6,7 @@ import time
 import boto3
 import sys
 from datetime import datetime
+import openai.error.ServiceUnavailableError as SerciveUnavailableError
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 import ast
@@ -173,13 +174,19 @@ def rename_ideas(df_chunk: pd.DataFrame, flag:dict) -> pd.DataFrame:
         ],
         temperature=0,
     )
-    
-    try:
-        json_data = ast.literal_eval(str(response.choices[0].message['content']))
-        
-    except SyntaxError:
-        print('PRINT error ', response.choices[0].message['content'])
-        json_data = json.loads(str(response.choices[0].message['content']))
+    max_retries = 0
+    while max_retries < 5:
+        try:
+            json_data = ast.literal_eval(str(response.choices[0].message['content']))
+            max_retries = 5
+        except SyntaxError:
+            print('PRINT error ', response.choices[0].message['content'])
+            max_retries += 1
+            try:
+                json_data = json.loads(str(response.choices[0].message['content']))
+                max_retries = 5
+            except:
+                max_retries += 1
 
     df_ = pd.DataFrame(json_data['ideas'])
     df_['cluster_name'] = json_data['cluster_name']
@@ -275,7 +282,8 @@ def main(url):
 
 
 if __name__ == '__main__':
-    url = sys.argv[1]
+    #url = sys.argv[1]
+    url = 'https://innkdw-etl.s3.amazonaws.com/raw/05-12-2023_clustered_ideas.json'
     main(url)
 
 
