@@ -6,7 +6,6 @@ import time
 import boto3
 import sys
 from datetime import datetime
-import openai.error.ServiceUnavailableError as SerciveUnavailableError
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 import ast
