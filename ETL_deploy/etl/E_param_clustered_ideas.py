@@ -175,6 +175,7 @@ def rename_ideas(df_chunk: pd.DataFrame, flag:dict) -> pd.DataFrame:
     )
     max_retries = 0
     while max_retries < 5:
+        json_data = {'ideas': [], 'cluster_name': 'None', 'cluster_description': 'None'}
         try:
             json_data = ast.literal_eval(str(response.choices[0].message['content']))
             max_retries = 5
@@ -281,8 +282,7 @@ def main(url):
 
 
 if __name__ == '__main__':
-    #url = sys.argv[1]
-    url = 'https://innkdw-etl.s3.amazonaws.com/raw/05-12-2023_clustered_ideas.json'
+    url = sys.argv[1]
     main(url)
 
 
