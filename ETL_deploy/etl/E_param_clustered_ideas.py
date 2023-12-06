@@ -189,8 +189,8 @@ def rename_ideas(df_chunk: pd.DataFrame, flag:dict) -> pd.DataFrame:
         try:
             json_data = ast.literal_eval(str(response.choices[0].message['content']))
             max_retries = 5
-        except SyntaxError:
-            print('PRINT error ', response.choices[0].message['content'])
+        except Exception as e:
+            print('PRINT error ', e, response.choices[0].message['content'])
             try:
                 json_data = json.loads(str(response.choices[0].message['content']))
                 max_retries = 5
