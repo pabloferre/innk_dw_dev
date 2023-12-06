@@ -282,7 +282,8 @@ def main(url):
 
 
 if __name__ == '__main__':
-    url = sys.argv[1]
+    url = "https://innkdw-etl.s3.amazonaws.com/raw/06-12-2023_clustered_ideas.json"
+    #url = sys.argv[1]
     main(url)
 
 
