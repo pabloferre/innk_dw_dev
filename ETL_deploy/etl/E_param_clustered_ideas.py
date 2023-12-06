@@ -185,7 +185,8 @@ def rename_ideas(df_chunk: pd.DataFrame, flag:dict) -> pd.DataFrame:
     
     max_retries = 0
     while max_retries < 5:
-        json_data = {'ideas': [], 'cluster_name': 'None', 'cluster_description': 'None'}
+        json_data = {'ideas': [{'index':'', 'idea_name':'', 'ideas_description':''}], 
+                     'cluster_name': 'None', 'cluster_description': 'None'}
         try:
             json_data = ast.literal_eval(str(response.choices[0].message['content']))
             max_retries = 5
