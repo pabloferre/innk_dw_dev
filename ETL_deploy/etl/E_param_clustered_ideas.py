@@ -63,6 +63,30 @@ Example of the desired output:
     "cluster_description": "A short and concise summary of the cluster, not exceeding 30 words."
 }}
 
+And this is a example of unwanted output:
+```json
+{{
+  "ideas": [
+    {{
+      "index": given index by user,
+      "idea_name": "Innovative Name for Idea 0", 
+      "idea_description": "A brief and engaging summary of Idea 0, not exceeding 35 words."
+    }},
+    {{
+      "index": given index by user,
+      "idea_name": "Creative Title for Idea 1", 
+      "idea_description": "A succinct and clear summary for Idea 1, within 10 to 35 words."
+    }}
+    // Continue for each idea in the list
+  ]]
+  "cluster_name": "New Cluster Name",
+    "cluster_description": "A short and concise summary of the cluster, not exceeding 30 words."
+}}
+```
+
+Please avoid anythig that is not a dictionary with the desired output. Symbols like ```json, ``` and ```//``` are not allowed.
+
+
 Note: Please ensure all new idea names and summaries are provided in Spanish.  
 The summary for each idea should not exceed 35 words. A unique response is required for each individual idea in the list. Respond 
  with only a dicitionary with the disired output. No extra text or symbols.
@@ -95,6 +119,29 @@ Example of the desired output:
   "cluster_name": "New Cluster Name",
     "cluster_description": "A short and concise summary of the cluster, not exceeding 30 words."
 }}
+
+And this is a example of unwanted output:
+```json
+{{
+  "ideas": [
+    {{
+      "index": given index by user,
+      "idea_name": "Innovative Name for Idea 0", 
+      "idea_description": "A brief and engaging summary of Idea 0, not exceeding 35 words."
+    }},
+    {{
+      "index": given index by user,
+      "idea_name": "Creative Title for Idea 1", 
+      "idea_description": "A succinct and clear summary for Idea 1, within 10 to 35 words."
+    }}
+    // Continue for each idea in the list
+  ]]
+  "cluster_name": "New Cluster Name",
+    "cluster_description": "A short and concise summary of the cluster, not exceeding 30 words."
+}}
+```
+
+Please avoid anythig that is not a dictionary with the desired output. Symbols like ```json, ``` and ```//``` are not allowed.
 
 Take in consideration to combine the cluster name and description from the previous chunk of ideas. 
 This where the previous cluster name and description from the previous chunk of ideas:
@@ -156,6 +203,10 @@ def create_message_prompt(ideas: pd.Series, prompt: str, flag:dict) -> str:
         return prompt.format(ideas=ideas_str)
 
 
+def clean_json(text: str) -> str:
+    text_ =  str(text).replace('```json', '').replace('```', '')
+    return text_
+
 ############################################# TASK FUNCTIONS #################################################
 
 
@@ -188,7 +239,7 @@ def rename_ideas(df_chunk: pd.DataFrame, flag:dict) -> pd.DataFrame:
         json_data = {'ideas': [{'index':'', 'idea_name':'', 'ideas_description':''}], 
                      'cluster_name': 'None', 'cluster_description': 'None'}
         try:
-            json_data = ast.literal_eval(str(response.choices[0].message['content']))
+            json_data = ast.literal_eval(clean_json(f"""{response.choices[0].message['content']}"""))
             max_retries = 5
         except Exception as e:
             print('PRINT error ', e, response.choices[0].message['content'])
@@ -263,7 +314,7 @@ def main(url):
     if status == 200:
         print(f"Successful S3 get_object response. Status - {status}")
         df = pd.read_json(response.get("Body"))
-        df = df.loc[df.loc[:, 'company_id']<=61,:]
+        df = df.loc[df.loc[:, 'company_id']<62 and df.loc[:, 'company_id']<=107,:]
 
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
@@ -293,7 +344,7 @@ def main(url):
 
 
 if __name__ == '__main__':
-    url = "https://innkdw-etl.s3.amazonaws.com/raw/06-12-2023_clustered_ideas.json"
+    url = "https://innkdw-etl.s3.amazonaws.com/raw/05-12-2023_clustered_ideas.json"
     #url = sys.argv[1]
     main(url)
 
