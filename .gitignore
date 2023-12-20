@@ -8,4 +8,4 @@ __pycache__/*
 lib/__pycache__/
 innk_dw/lib/__pycache__
 /etl_airflow.ppk
-ETL_deploy/airflow-worker.pid
+/ETL_deploy/airflow-worker.pid
