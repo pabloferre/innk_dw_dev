@@ -314,7 +314,7 @@ def main(url):
     if status == 200:
         print(f"Successful S3 get_object response. Status - {status}")
         df = pd.read_json(response.get("Body"))
-        df = df.loc[df.loc[:, 'company_id']<62 and df.loc[:, 'company_id']<=107,:]
+        df = df.loc[(df.loc[:, 'company_id']<62) & (df.loc[:, 'company_id']<=107),:]
 
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
