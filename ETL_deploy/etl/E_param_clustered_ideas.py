@@ -331,7 +331,7 @@ def main(url):
     
     s3_client.put_object(Bucket=bucket_name, Key=s3_file_name_raw, Body=raw_file)
     
-    response = s3_client.delete_object(Bucket=bucket_name, Key=s3_file_name)
+    #response = s3_client.delete_object(Bucket=bucket_name, Key=s3_file_name)
     
     url = f'https://{bucket_name}.s3.amazonaws.com/{s3_file_name_raw}'
     
