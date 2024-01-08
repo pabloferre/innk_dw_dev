@@ -189,6 +189,7 @@ def final_text(text):
     cleaned_text = ' '.join(lines)
     # Remove extra spaces
     cleaned_text = ' '.join(cleaned_text.split())
+    cleaned_text = cleaned_text.replace('"', '').replace("'", '')
     # Remove text len greater than 500
     if len(cleaned_text) > 800:
         cleaned_text = cleaned_text[:800]
