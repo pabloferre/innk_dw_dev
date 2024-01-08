@@ -10,6 +10,7 @@ path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 import ast
 import json
+import re
 import time
 
 load_dotenv()
@@ -63,7 +64,7 @@ Example of the desired output:
     "cluster_description": "A short and concise summary of the cluster, not exceeding 30 words."
 }}
 
-And this is a example of unwanted output:
+And this is a example of unwanted output that also used double quotes in the text of the answer without escaping them:
 ```json
 {{
   "ideas": [
@@ -75,7 +76,7 @@ And this is a example of unwanted output:
     {{
       "index": given index by user,
       "idea_name": "Creative Title for Idea 1", 
-      "idea_description": "A succinct and clear summary for Idea 1, within 10 to 35 words."
+      "idea_description": "A succinct and clear summary for "Idea 1", within 10 to 35 words."
     }}
     // Continue for each idea in the list
   ]]
@@ -84,8 +85,8 @@ And this is a example of unwanted output:
 }}
 ```
 
-Please avoid anythig that is not a dictionary with the desired output. Symbols like ```json, ``` and ```//``` are not allowed.
-
+Please avoid anythig that is not a dictionary with the desired output. Symbols like ```json, ``` and ```//``` are not allowed. Also, avoid 
+using double or simple quotes in the text of you answer. Use the quotes only in the keys and values of the dictionary.
 
 Note: Please ensure all new idea names and summaries are provided in Spanish.  
 The summary for each idea should not exceed 35 words. A unique response is required for each individual idea in the list. Respond 
@@ -120,7 +121,7 @@ Example of the desired output:
     "cluster_description": "A short and concise summary of the cluster, not exceeding 30 words."
 }}
 
-And this is a example of unwanted output:
+And this is a example of unwanted output that also used double quotes in the text of the answer without escaping them:
 ```json
 {{
   "ideas": [
@@ -132,7 +133,7 @@ And this is a example of unwanted output:
     {{
       "index": given index by user,
       "idea_name": "Creative Title for Idea 1", 
-      "idea_description": "A succinct and clear summary for Idea 1, within 10 to 35 words."
+      "idea_description": "A succinct and clear summary for "Idea 1", within 10 to 35 words."
     }}
     // Continue for each idea in the list
   ]]
@@ -141,7 +142,9 @@ And this is a example of unwanted output:
 }}
 ```
 
-Please avoid anythig that is not a dictionary with the desired output. Symbols like ```json, ``` and ```//``` are not allowed.
+Please avoid anythig that is not a dictionary with the desired output. Symbols like ```json, ``` and ```//``` are not allowed. Also, avoid 
+using double or simple quotes in the text of you answer. Use the quotes only in the keys and values of the dictionary.
+
 
 Take in consideration to combine the cluster name and description from the previous chunk of ideas. 
 This where the previous cluster name and description from the previous chunk of ideas:
@@ -163,7 +166,7 @@ List of Ideas:
 \n
 {ideas}
 \nNote: Ensure the new cluster names and summaries are delivered in Spanish. One response is required for each idea \
-listed. Don't copy the given idea name and idea description in the response."""
+listed. Don't copy the given idea name and idea description in the response. Avoid using simple or double quotes in the response."""
 
 
 #################################################AUXILIARY FUNCTIONS##############################################
@@ -206,6 +209,7 @@ def create_message_prompt(ideas: pd.Series, prompt: str, flag:dict) -> str:
 def clean_json(text: str) -> str:
     text_ =  str(text).replace('```json', '').replace('```', '')
     return text_
+  
 
 ############################################# TASK FUNCTIONS #################################################
 
