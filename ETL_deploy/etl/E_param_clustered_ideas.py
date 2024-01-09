@@ -211,6 +211,26 @@ def clean_json(text: str) -> str:
     text_ =  str(text).replace('```json', '').replace('```', '')
     return text_
   
+def fix_json(json_str):
+  # This function fixes the json string returned by the API, it ensures that the json string 
+  # is valid removing unwanted quotes
+  fix_json = {'ideas':[]} 
+  idea_names = json_str.split('"idea_name": ')
+  indexes = json_str.split('"index": ')
+  for i, idea in enumerate(idea_names):
+    if i == 0:
+      continue
+    else:
+      index = indexes[i].split(',')[0]
+      idea_names[i] = idea_names[i].split(',')[0].replace('"', '').replace('\n', '').replace('}','').replace(']','').strip()
+      idea_description = idea.split('"idea_description":')[1].split(',')[0].replace('"', '').replace('\n', '').replace('}','').replace(']','').strip()
+
+    fix_json['ideas'].append({'index':index, 'idea_name':idea_names[i], 'idea_description':idea_description})
+  
+  fix_json['cluster_name'] = json_str.split('"cluster_name": ')[1].split(',')[0].replace('"', '').replace('\n', '').replace('}','').replace(']','').strip()
+  fix_json['cluster_description'] = json_str.split('"cluster_description": ')[1].split(',')[0].replace('"', '').replace('\n', '').replace('}','').replace(']','').strip()
+  
+  return str(fix_json).replace("'", '"')
 
 ############################################# TASK FUNCTIONS #################################################
 
@@ -249,7 +269,7 @@ def rename_ideas(df_chunk: pd.DataFrame, flag:dict) -> pd.DataFrame:
         except Exception as e:
             print('PRINT error ', e, response.choices[0].message['content'])
             try:
-                json_data = json.loads(str(response.choices[0].message['content']))
+                json_data = json.loads(fix_json(response.choices[0].message['content']))
                 max_retries = 5
             except:
                 max_retries += 1
