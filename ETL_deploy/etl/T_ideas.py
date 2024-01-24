@@ -142,7 +142,7 @@ def process_data(df: pd.DataFrame, start_index=0) -> pd.DataFrame:
             except Exception as e:
                 retries += 1
                 backoff_time = 2 * retries  # geometrical backoff
-                print(f'Error at index {index}. Retrying in {backoff_time} seconds...')
+                print(f'Error at index {index}. Retrying in {backoff_time} seconds... Error: {e}')
                 time.sleep(backoff_time)
 
         

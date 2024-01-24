@@ -339,7 +339,6 @@ def main(url):
     if status == 200:
         print(f"Successful S3 get_object response. Status - {status}")
         df = pd.read_json(response.get("Body"))
-        df = df.loc[df.loc[:, 'company_id']>299,:]
 
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
@@ -356,7 +355,7 @@ def main(url):
     
     s3_client.put_object(Bucket=bucket_name, Key=s3_file_name_raw, Body=raw_file)
     
-    #response = s3_client.delete_object(Bucket=bucket_name, Key=s3_file_name)
+    response = s3_client.delete_object(Bucket=bucket_name, Key=s3_file_name)
     
     url = f'https://{bucket_name}.s3.amazonaws.com/{s3_file_name_raw}'
     
@@ -369,8 +368,7 @@ def main(url):
 
 
 if __name__ == '__main__':
-    url = "https://innkdw-etl.s3.amazonaws.com/raw/05-12-2023_clustered_ideas.json"
-    #url = sys.argv[1]
+    url = sys.argv[1]
     main(url)
 
 

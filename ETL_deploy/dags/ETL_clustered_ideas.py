@@ -54,5 +54,4 @@ with DAG(
 
 
 
-#get_clusters >> extract_data  >> transform_data >> load_data
-extract_data  >> transform_data >> load_data
+get_clusters >> extract_data  >> transform_data >> load_data

@@ -74,7 +74,8 @@ def main(url):
     
     if len(df_users) == 0:
         print("No new users to upload")
-        return None
+        sys.stdout.write("No new users to upload")
+        return "No new users to upload"
     
     #Create dictionary from DIM_COMPANY table
     conn1 = get_conn(aws_host, aws_db_dw, aws_port, aws_user_db, aws_pass_db)
