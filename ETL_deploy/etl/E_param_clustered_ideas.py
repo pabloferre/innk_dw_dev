@@ -10,8 +10,8 @@ path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 os.chdir(path)
 import ast
 import json
-import re
 import time
+from lib.utils import get_conn, execute_sql
 
 load_dotenv()
 bucket_name = os.environ.get('bucket_name')
@@ -231,6 +231,27 @@ def fix_json(json_str):
   fix_json['cluster_description'] = json_str.split('"cluster_description": ')[1].split(',')[0].replace('"', '').replace('\n', '').replace('}','').replace(']','').strip()
   
   return str(fix_json).replace("'", '"')
+
+
+def get_param_clustered_ideas(conn) -> pd.DataFrame:
+  """Connects to database and returns a dataframe with all ideas form the
+  param cluster table.
+
+  Args:
+      conn (_type_): db connection
+
+
+  Returns:
+      pd.DataFrame: _description_
+  """
+  q = """SELECT idea_id, idea_db_id, company_id, goal_id FROM public.param_clustered_ideas"""
+  result = execute_sql(q, conn)
+  df = pd.DataFrame(result, columns=['idea_id', 'idea_db_id', 'company_id', 'goal_id'])
+  
+  return df
+    
+
+
 
 ############################################# TASK FUNCTIONS #################################################
 

@@ -8,6 +8,7 @@ default_args = {
     'owner': 'airflow',
     'start_date': datetime(2023, 10, 18),
     'retries': 5,
+    'max_active_runs': 1,
 }
 
 with DAG(

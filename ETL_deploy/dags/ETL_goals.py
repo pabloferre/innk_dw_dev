@@ -8,6 +8,7 @@ default_args = {
     'owner': 'airflow',
     'start_date': datetime(2023, 10, 18),
     'retries': 5,
+    'max_active_runs': 1,
 }
 
 
@@ -48,6 +49,7 @@ with DAG(
     trigger_dag_ideas = TriggerDagRunOperator(
         task_id='trigger_dag_ideas',
         trigger_dag_id='ETL_ideas',
+        wait_for_completion=True,
         dag=dag
     )
 
