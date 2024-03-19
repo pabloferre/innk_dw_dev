@@ -33,7 +33,7 @@ x-airflow-common:
     - ./dags:/opt/airflow/dags
     - ./logs:/usr/local/airflow/logs 
     - ./:/usr/local/airflow
-    - ./airflow-worker.pid:/usr/local/airflow/airflow-worker.pid 
+    #- ./airflow-worker.pid:/usr/local/airflow/airflow-worker.pid 
     - ./:/opt/airflow/
     #- ./config:/opt/airflow/config
     - ./plugins:/opt/airflow/plugins
