@@ -10,3 +10,6 @@ innk_dw/lib/__pycache__
 /etl_airflow.ppk
 /ETL_deploy/airflow-worker.pid
 /ETL_deploy/airflow-webserver.pid
+.ipynb
+db_date_fix.ipynb
+db_date_fix.py

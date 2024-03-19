@@ -35,7 +35,6 @@ x-airflow-common:
     - ./:/usr/local/airflow
     - ./airflow-worker.pid:/usr/local/airflow/airflow-worker.pid 
     - ./:/opt/airflow/
-    - ./:/usr/local/airflow
     #- ./config:/opt/airflow/config
     - ./plugins:/opt/airflow/plugins
     - ./entrypoint.sh:/entrypoint.sh
