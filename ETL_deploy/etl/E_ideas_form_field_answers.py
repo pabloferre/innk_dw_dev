@@ -44,11 +44,11 @@ def get_forms_with_answers(conn, comp: pd.DataFrame): #Mejorar la funcion sacand
     
     df_combined = pd.DataFrame()
     for i in comp['id']:
-        print(i)
         c = i
         qy = f""" select ifa.idea_id as "idea_id", cff.id as "field_id",ifa.answer as "field_answer", cff.company_id as "company_id", 
                 cff.title as "title", cff.description as "description", cff.form_field_id as "form_field_id", cff.form_id as "form_id",
-                ideas.title as "idea_name", ideas.description as "idea_description"
+                ideas.title as "idea_name", ideas.description as "idea_description", ifa.created_at as "created_at",
+                ifa.updated_at as "updated_at"
                 from idea_field_answers ifa 
                 join company_form_fields cff on ifa.company_form_field_id = cff.id 
                 join ideas on ideas.id = ifa.idea_id 
@@ -58,7 +58,7 @@ def get_forms_with_answers(conn, comp: pd.DataFrame): #Mejorar la funcion sacand
             cur.execute(qy)
             result = cur.fetchall()
         temp = pd.DataFrame(result, columns=['idea_id', 'field_id', 'field_answer', 'company_id', 'title', 'description', 'form_field_id', 
-                                            'form_id', 'idea_name', 'idea_description'])
+                                            'form_id', 'idea_name', 'idea_description', 'created_at', 'updated_at'])
         df_combined = pd.concat([df_combined, temp], ignore_index=True)
         
     conn.close()

@@ -244,21 +244,18 @@ def main(url):
         ideas.stage AS "stage",
         ideas.like_ideas_count AS "like_ideas_count",
         ideas.average_general AS "average_general",
-        ideas.created_at AS "created_at",
-        ideas.updated_at AS "updated_at",
         ideas.submited_at AS "submited_at"
     FROM
         public.tags
     LEFT JOIN
         public.ideas_tags ON tags.id = ideas_tags.tag_id
-    LEFT JOIN
+    RIGHT JOIN
         public.ideas ON ideas.id = ideas_tags.idea_id;"""
     
     conn6 = get_conn(aws_host, aws_db, aws_port, aws_user_db, aws_pass_db)
     result6 = execute_sql(q1, conn6)
     df_tag = pd.DataFrame(result6, columns=['tag_name', 'tag_description', 'tag_id', 'tag_type', 'idea_id',
-                                            'user_id', 'goal_id', 'is_private', 'stage', 'like_ideas_count', 'average_general', 'created_at',
-                                            'updated_at', 'submited_at'])
+                                            'user_id', 'goal_id', 'is_private', 'stage', 'like_ideas_count', 'average_general', 'submited_at'])
     
 
     df_stg = pd.merge(df_emb, df_tag, how='left', on='idea_id')
