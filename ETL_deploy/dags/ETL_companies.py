@@ -6,6 +6,7 @@ from datetime import datetime
 
 default_args = {
     'owner': 'airflow',
+    'dependes_on_past': False,
     'start_date': datetime(2023, 11, 27, 12, 30),
     'retries': 5,
     'schedule_interval': '30 8 * * *',
