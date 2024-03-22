@@ -50,7 +50,7 @@ with DAG(
     trigger_dag_ideas = TriggerDagRunOperator(
         task_id='trigger_dag_ideas',
         trigger_dag_id='ETL_ideas',
-        wait_for_completion=True,
+        wait_for_completion=False,
         dag=dag
     )
 

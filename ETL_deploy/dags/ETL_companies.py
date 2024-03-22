@@ -47,7 +47,7 @@ with DAG(
     triger_dag_users = TriggerDagRunOperator(
         task_id='triger_dag_users',
         trigger_dag_id='ETL_users',
-        wait_for_completion=True,
+        wait_for_completion=False,
         dag=dag
     )
 

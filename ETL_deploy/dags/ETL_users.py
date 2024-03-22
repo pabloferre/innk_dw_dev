@@ -48,7 +48,7 @@ with DAG(
     trigger_dag_goals = TriggerDagRunOperator(
         task_id='trigger_dag_goals',
         trigger_dag_id='ETL_goals',
-        wait_for_completion=True,
+        wait_for_completion=False,
         dag=dag
     )
 

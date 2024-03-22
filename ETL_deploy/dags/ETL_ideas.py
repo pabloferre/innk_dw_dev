@@ -53,7 +53,7 @@ with DAG(
     transform_fact_sub_ideas = BashOperator(
         task_id='T_fact_sub_ideas',
         bash_command='python3 /usr/local/airflow/etl/T_fact_sub_ideas.py "{{ ti.xcom_pull(task_ids=\'T_ideas\') }}"',
-        do_xcom_push=True,
+        do_xcom_push=False,
         dag=dag
     )
 
