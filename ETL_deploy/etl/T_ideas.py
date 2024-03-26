@@ -16,7 +16,7 @@ from lib.utils import get_conn, get_embeddings, execute_sql, categorize, ensure_
 
 today = datetime.today().strftime("%Y-%m-%d")
 now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-default_none_date = datetime.strptime('9999-12-31', "%Y-%m-%d")
+default_none_date = pd.Timestamp.max
 
 ##### Dependencies:  E_ideas_form_field_answers.py > T_param_class_table.py > L_param_class_table.py ###############
 

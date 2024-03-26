@@ -67,6 +67,8 @@ def main(url):
         print(f"Unsuccessful S3 get_object response. Status - {status}")
         raise Exception(f"Error loading data from S3 - {status}")
     
+    df_stage[df_stage['company_name'].isna() | df_stage['company_name'].isnull(),
+             'company_name' ] = "Sin nombre"
     df_stage = convert_to_datetime(df, ['created_at', 'updated_at'])
     df_stage['valid_from'] = today
     df_stage['valid_to'] = '9999-12-31'
